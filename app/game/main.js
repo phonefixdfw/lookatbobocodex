@@ -315,7 +315,14 @@ el('home-sound').addEventListener('click',()=>{
   updateAudio();
 });
 el('pause').addEventListener('click',()=>pause());
-el('shout').addEventListener('click',shout);
+el('shout').addEventListener('pointerdown',event=>{
+  if(event.button!==0)return;
+  event.preventDefault();
+  shout();
+});
+el('shout').addEventListener('click',event=>{
+  if(event.detail===0)shout(); // Keyboard and assistive technology activation.
+});
 panel.addEventListener('cancel',event=>{event.preventDefault();closeMenu();});
 
 const movement=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowLeft','ArrowDown','ArrowRight']);

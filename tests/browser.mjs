@@ -241,8 +241,10 @@ try {
   await moveTouch({x:231,y:336});
   await endTouch();
   assert.notEqual(await mobile.evaluate(()=>boboTest.read().pose.yaw),beforeMove.yaw);
-  await mobile.locator('#shout').tap();
-  assert((await mobile.evaluate(()=>boboTest.read().audio.events)).includes('shout'));
+  const shoutControl=layout.ids[3];
+  await startTouch({x:shoutControl.x+shoutControl.width/2,y:shoutControl.y+shoutControl.height/2});
+  await mobile.waitForFunction(()=>boboTest.read().audio.events.includes('shout'),null,{timeout:4500});
+  await endTouch();
   assert.equal(await mobile.evaluate(()=>boboTest.read().audio.notes),0);
   await mobile.setViewportSize({width:844,height:390});
   await screenshot(mobile,'mobile-landscape');
