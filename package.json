@@ -1,0 +1,17 @@
+{
+  "name": "look-at-bobo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node tests/gate.mjs",
+    "test:browser": "node tests/browser.mjs",
+    "test:crawl": "node tests/crawl.mjs",
+    "check": "npm run build && npm test && npm run test:crawl && npm run test:browser"
+  },
+  "dependencies": { "three": "0.180.0" },
+  "devDependencies": { "playwright": "1.65.0" },
+  "engines": { "node": ">=22" }
+}

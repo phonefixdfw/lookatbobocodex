@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "Look at Bobo!",
+  "short_name": "Bobo",
+  "description": "A cozy first-person cat hunt",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["fullscreen", "standalone"],
+  "background_color": "#f6eee2",
+  "theme_color": "#334b3f",
+  "icons": [
+    {"src":"assets/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"assets/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}
