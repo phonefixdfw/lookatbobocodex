@@ -297,6 +297,13 @@ function frame(now){
 }
 if(scene)requestAnimationFrame(frame);
 
+if('serviceWorker' in navigator && !query.capture){
+  // Register only after the page has loaded, so precaching cannot delay the first frame.
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register(new URL('../sw.js',import.meta.url)).catch(()=>{});
+  },{once:true});
+}
+
 el('play').addEventListener('click',start);
 el('scores').addEventListener('click',showScores);
 el('install').addEventListener('click',showInstall);
