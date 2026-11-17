@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6eee2">
+  <meta name="description" content="A cozy first-person cat hunt. Spot Bobo, aim, and shout!">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Look at Bobo!</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./assets/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="./style.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/addons/"}}</script>
+  <script type="module" src="./game/main.js"></script>
+</head>
+<body>
+  <div class="shell" id="shell">
+    <header class="masthead">
+      <div class="brand">
+        <span class="paw" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></span>
+        <span>Look at Bobo!</span>
+      </div>
+      <button class="outline mini" id="home-sound" type="button" aria-pressed="true">
+        <span class="speaker" aria-hidden="true">◖))</span><span id="sound-label">Sound on</span>
+      </button>
+    </header>
+
+    <main class="landing" id="landing">
+      <section class="intro" aria-labelledby="title">
+        <div class="kicker"><span></span> A cozy cat hunt</div>
+        <h1 id="title" aria-label="Look at Bobo!"><span>Look at</span><em>Bobo<span class="bang">!</span></em></h1>
+        <p class="lead">Somewhere in this apartment, Bobo is being extremely cute. Find him, aim, and shout <strong>“LOOK AT BOBO!”</strong></p>
+        <div class="actions">
+          <button class="primary" id="play" type="button">Play game <span aria-hidden="true">↗</span></button>
+          <button class="outline" id="scores" type="button">Best times</button>
+        </div>
+        <div class="quick-guide">
+          <div class="quick-row"><span class="target-icon" aria-hidden="true"></span><span><strong>Find Bobo 10 times.</strong> Look for the white bib and little forehead dash.</span></div>
+          <div class="quick-row"><span class="decoy-icon" aria-hidden="true">!</span><span><strong>Watch for the decoy.</strong> Wrong cat? DAG! Lose a point and add 5 seconds.</span></div>
+        </div>
+      </section>
+
+      <section class="picture" id="picture" aria-label="Bobo’s apartment">
+        <div class="stage" id="stage">
+          <canvas id="world" aria-label="3D apartment"></canvas>
+          <div class="error" id="error" hidden role="alert">The 3D apartment needs WebGL 2. Enable hardware acceleration or try a browser with WebGL 2.</div>
+        </div>
+        <div class="photo-label"><span></span> Bobo on his heat pad</div>
+      </section>
+    </main>
+    <footer class="footer" id="footer">
+      <span id="controls-copy"><kbd>WASD</kbd> Move <b>·</b> Mouse aim <b>·</b> <kbd>CLICK</kbd> or <kbd>SPACE</kbd> Shout</span>
+      <button id="install" class="text-button" type="button">Install on your device <span aria-hidden="true">↗</span></button>
+    </footer>
+  </div>
+
+  <section id="game" class="game" aria-label="Look at Bobo game" hidden>
+    <div id="world-slot"></div>
+    <div class="hud">
+      <div class="score-card">
+        <div><span class="score-name">Bobo points</span><strong id="points">0 <small>/ 10</small></strong></div>
+        <div class="ticks" id="ticks" aria-hidden="true"></div>
+      </div>
+      <div class="run-tools">
+        <span id="timer" class="timer" aria-label="Elapsed time">00:00</span>
+        <button class="pause-button" id="pause" type="button" aria-label="Pause game"><span aria-hidden="true">Ⅱ</span></button>
+      </div>
+    </div>
+    <div id="reticle" class="reticle" aria-hidden="true"><span></span></div>
+    <div id="status" class="status" role="status"></div>
+    <div id="desktop-hint" class="desktop-hint"><kbd>WASD</kbd> Move <b>·</b> <kbd>CLICK</kbd> or <kbd>SPACE</kbd> Shout <b>·</b> <kbd>P</kbd> Pause</div>
+    <div id="touch-hint" class="desktop-hint" hidden>Joystick to move <b>·</b> Drag to aim</div>
+    <div id="touch-controls" class="touch-controls" hidden>
+      <div id="stick" class="stick" aria-label="Move joystick"><span id="stick-thumb"></span></div>
+      <button id="shout" class="shout" type="button">LOOK AT<br>BOBO!</button>
+    </div>
+    <div id="stamp" class="stamp" hidden></div>
+  </section>
+
+  <dialog class="panel" id="panel" aria-labelledby="panel-title">
+    <div class="panel-top"><span class="kicker"><span></span> Look at Bobo!</span><button id="close-panel" class="close-panel" type="button" aria-label="Close">×</button></div>
+    <h2 id="panel-title"></h2>
+    <div id="panel-body"></div>
+  </dialog>
+</body>
+</html>
