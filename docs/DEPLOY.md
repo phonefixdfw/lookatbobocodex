@@ -8,7 +8,7 @@ npm run build
 npm run dev
 ```
 
-Open the URL shown by the dev server. For production, serve the contents of `dist/` over HTTPS with the correct JavaScript and manifest MIME types. Relative asset paths support a domain root or a project path such as `/lookatbobocodex/`.
+Open the URL shown by the dev server. For production, serve the contents of `dist/` over HTTPS with the correct JavaScript and manifest MIME types. Relative asset paths support a domain root or a project path such as `/lookatbobocodex/`. The home screen shows the first eight characters of the running build's fingerprint. The full fingerprint appears when hovering over the label. Deploy the entire `dist/` tree, including its `release/` directory, so a new home page loads the matching game modules and styles.
 
 ## GitHub Pages
 

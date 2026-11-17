@@ -7,7 +7,7 @@ const home = new URL('index.html', base).href;
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(version)
-    .then(cache => cache.addAll([...assets]))
+    .then(cache => cache.addAll([...assets].map(url => new Request(url, { cache: 'reload' }))))
     .then(() => self.skipWaiting()));
 });
 
@@ -25,7 +25,7 @@ self.addEventListener('fetch', event => {
     url.pathname === new URL(base).pathname || url.pathname === new URL(home).pathname
   ) && url.origin === new URL(base).origin;
   if (!navigation && !assets.has(url.href)) return;
-  event.respondWith(fetch(request).catch(async () => {
+  event.respondWith(fetch(request, navigation ? { cache: 'no-cache' } : undefined).catch(async () => {
     const cache = await caches.open(version);
     return await cache.match(navigation ? home : url.href) ?? Response.error();
   }));
