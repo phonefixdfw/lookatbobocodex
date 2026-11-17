@@ -269,6 +269,29 @@ try {
   await audio.close();
   console.log('Three recorded lines decoded; bardcore sequencing, shout, DAG! and pause audio checks passed.');
 
+  const subsite=await serve({basePath:'/lookatbobocodex/'});
+  try{
+    const offline=await browser.newPage(desktop);
+    const path=subsite.url+'?test=on&quality=low';
+    await offline.goto(path);
+    await offline.waitForFunction(()=>Boolean(navigator.serviceWorker.controller),null,{timeout:12000});
+    const cached=await offline.evaluate(async()=>{
+      const registration=await navigator.serviceWorker.ready;
+      return {scope:registration.scope,files:await caches.keys()};
+    });
+    assert.equal(cached.scope,subsite.url);
+    assert(cached.files.some(name=>name.startsWith('look-at-bobo:/lookatbobocodex/:')));
+    await offline.context().setOffline(true);
+    await offline.goto(path);
+    await offline.waitForFunction(()=>Boolean(window.boboTest));
+    await start(offline);
+    assert((await offline.evaluate(()=>boboTest.read().metrics.calls))>0);
+    await offline.close();
+  } finally {
+    await new Promise(done=>subsite.server.close(done));
+  }
+  console.log('Versioned service worker installed and booted a playable game offline under the GitHub Pages project path.');
+
   const stress=await pageFor('?gate=off&test=on&quality=low&lap=off');
   await start(stress);
   await stress.evaluate(()=>{

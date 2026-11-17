@@ -7,12 +7,13 @@ import { pathToFileURL } from 'node:url';
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8',
   '.png':'image/png','.wav':'audio/wav','.webmanifest':'application/manifest+json','.txt':'text/plain'};
 
-export function serve({port=0,dir='dist'}={}){
+export function serve({port=0,dir='dist',basePath='/'}={}){
   const root=resolve(dir);
   const server=http.createServer(async (request,response)=>{
     try{
       const route=decodeURIComponent(new URL(request.url,'http://localhost').pathname);
-      let file=resolve(root,'.'+route);
+      if(!route.startsWith(basePath)){response.writeHead(404).end();return;}
+      let file=resolve(root,'./'+route.slice(basePath.length));
       if(file!==root && !file.startsWith(root+sep)){response.writeHead(403).end();return;}
       let info=await stat(file);
       if(info.isDirectory()){file=resolve(file,'index.html');info=await stat(file);}
@@ -27,7 +28,7 @@ export function serve({port=0,dir='dist'}={}){
   return new Promise((success,failure)=>{
     server.once('error',failure);
     server.listen(port,'127.0.0.1',()=>{
-      success({server,url:'http://127.0.0.1:'+server.address().port+'/'});
+      success({server,url:'http://127.0.0.1:'+server.address().port+basePath});
     });
   });
 }
