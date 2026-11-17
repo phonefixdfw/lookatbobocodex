@@ -4,6 +4,17 @@ export const EYE = 1.63;
 export const WALK_SPEED = 2.2;
 export const VACUUM_SPEED = 0.18;
 export const START = { x: 4.95, z: 5.05 };
+export const playerSpawns = [
+  { id:'living-entry', x:4.44, z:4.65, yaw:1.28, pitch:-.13 },
+  { id:'dining-entry', x:9.91, z:3.14, yaw:1.06, pitch:-.12 },
+  { id:'kitchen-entry', x:11.12, z:2.02, yaw:-1.43, pitch:-.12 },
+  { id:'landing-entry', x:7.75, z:4.92, yaw:-.31, pitch:-.10 },
+  { id:'hall-entry', x:8.92, z:7.50, yaw:-1.57, pitch:-.06 },
+  { id:'bedroom-entry', x:6.04, z:10.11, yaw:2.18, pitch:-.13 },
+  { id:'bath-entry', x:11.98, z:10.08, yaw:2.96, pitch:-.11 },
+  { id:'patio-entry', x:4.57, z:-1.27, yaw:1.12, pitch:-.09 },
+];
+
 export const rooms = {
   living: [0, 0, 6.4, 6.4],
   dining: [6.4, 0, 10.4, 3.8],

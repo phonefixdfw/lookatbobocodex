@@ -2,7 +2,7 @@
 
 [Play Look at Bobo on GitHub Pages](https://phonefixdfw.github.io/lookatbobocodex/)
 
-A cozy, first-person cat hunt in a procedural Three.js apartment. Find the black-and-white cat with the white bib and forehead dash. Aim and shout to earn ten points. The bigger black cat with white feet will cost you a point and add five seconds.
+A cozy, first-person cat hunt in a procedural Three.js apartment. Find the black-and-white cat with the white bib and forehead dash. Aim and shout to earn ten points. After a successful find, you and both cats move to new apartment spots. The bigger black cat with white feet will cost you a point and add five seconds.
 
 | Action | Desktop | Phone or tablet |
 | --- | --- | --- |

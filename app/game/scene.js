@@ -100,6 +100,12 @@ export function makeScene(canvas, config) {
     sync(run);
   }
 
+  function respawn(run){
+    const {x,z,yaw,pitch}=run.playerSpawn;
+    Object.assign(player,{x,z,yaw,pitch});
+    sync(run);
+  }
+
   function sync(run){
     if(modelSpot!==run.spot || modelDecoy!==run.decoySpot || isPatriot!==run.patriot)apply(run.spot,run.decoySpot,run.patriot);
     vacuum.visible=config.roomba;
@@ -225,7 +231,7 @@ export function makeScene(canvas, config) {
   }
 
   return {
-    player,resize,render,reset,sync,heroView,hit,aim,probe,apply,updatePose,catTarget,
+    player,resize,render,reset,respawn,sync,heroView,hit,aim,probe,apply,updatePose,catTarget,
     look(dx,dy,sensitivity=1){
       player.yaw-=dx*.0026*sensitivity;
       player.pitch=T.MathUtils.clamp(player.pitch-dy*.0026*sensitivity,-1.42,1.42);

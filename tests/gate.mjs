@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { DRAW_CAP, START, canStand, decoySpots, rooms, roomAt, roomLinks, spots, vacuumAt, vacuumLength, VACUUM_SPEED } from '../app/game/layout.js';
+import { DRAW_CAP, START, canStand, decoySpots, playerSpawns, rooms, roomAt, roomLinks, spots, vacuumAt, vacuumLength, VACUUM_SPEED } from '../app/game/layout.js';
 import { BREEZE_WIN, GOAL, LEADERBOARD, Run, options, readTimes, saveTime } from '../app/game/rules.js';
 import { navigation } from './navigation.mjs';
 
@@ -51,6 +51,20 @@ assert.deepEqual(readTimes(fakeStorage).map(entry=>entry.time),Array.from({lengt
 
 const nav=navigation();
 assert(canStand(START.x,START.z));
+for(const spawn of playerSpawns){
+  assert(canStand(spawn.x,spawn.z,.45),'player spawn must have at least 0.90 m clearance: '+spawn.id);
+  assert(nav.reachable.some(point=>Math.hypot(point.x-spawn.x,point.z-spawn.z)<.2),'player spawn must be reachable: '+spawn.id);
+}
+const relocating=new Run(capture);
+for(let find=0;find<8;find++){
+  const previous=relocating.playerSpawn;
+  assert.equal(relocating.shout('bobo',previous),'found');
+  const spawn=relocating.playerSpawn;
+  assert.notEqual(spawn.id,previous.id);
+  for(const {x,z} of [previous,relocating.spot,relocating.decoySpot]){
+    assert(Math.hypot(spawn.x-x,spawn.z-z)>=1.65,'player spawned too close to a previous position or cat');
+  }
+}
 assert.deepEqual(new Set(nav.reachable.map(({x,z})=>roomAt(x,z))),new Set(Object.keys(rooms)),'every named room must have a walkable path');
 for(const [from,to] of Object.entries(roomLinks))for(const room of to)assert(roomLinks[room].includes(from),'room link must work both ways');
 function connects(from,to,standing){

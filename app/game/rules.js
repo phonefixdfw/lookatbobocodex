@@ -1,4 +1,4 @@
-import { decoySpots, spots, special, vacuumLength } from './layout.js';
+import { decoySpots, playerSpawns, START, spots, special, vacuumAt, vacuumLength } from './layout.js';
 
 export const GOAL = 10;
 export const BREEZE_WIN = 'your did it! you wind';
@@ -59,6 +59,8 @@ export class Run {
     this.phase = this.rng() * vacuumLength;
     this.bobo = new SpotBag(spots, this.rng);
     this.decoy = new SpotBag(decoySpots, this.rng);
+    this.player = new SpotBag(playerSpawns, random(config.seed ^ 0x5b0b09));
+    this.playerSpawn = START;
     const lapChance = this.rng();
     this.lapAt = config.lap === 'off' ? 0 : Number.isInteger(config.lap)
       ? Math.max(2, config.lap) : config.lap === 'on' || lapChance < .20 ? 2+Math.floor(this.rng()*4) : 0;
@@ -72,7 +74,7 @@ export class Run {
     this.won = false;
     this.spawn();
   }
-  spawn() {
+  spawn(origin) {
     const previous = this.spot?.id;
     const lastDecoy = this.decoySpot?.id;
     const number = this.found+1;
@@ -85,11 +87,17 @@ export class Run {
     this.decoySpot = this.decoy.take(candidate => candidate.id !== lastDecoy
       && (Math.hypot(candidate.x-this.spot.x, candidate.z-this.spot.z) > 1.05)
       && !(this.spot.lap && candidate.id.startsWith('sofa')));
+    if(this.found){
+      const boboPosition = this.spot.moving ? vacuumAt(this.elapsed, this.phase) : this.spot;
+      const blocks = [origin ?? this.playerSpawn, boboPosition, this.decoySpot];
+      this.playerSpawn = this.player.take(candidate => candidate.id !== this.playerSpawn.id
+        && blocks.every(({x,z}) => Math.hypot(candidate.x-x,candidate.z-z) >= 1.65));
+    }
   }
   tick(seconds) {
     if (!this.won) this.elapsed += seconds;
   }
-  shout(target) {
+  shout(target, origin) {
     if (this.won) return 'ended';
     if (target === 'decoy') {
       this.score--;
@@ -101,7 +109,7 @@ export class Run {
     this.score += patriot ? 3 : 1;
     this.found++;
     this.won = this.score >= GOAL;
-    if (!this.won) this.spawn();
+    if (!this.won) this.spawn(origin);
     return this.won ? 'win' : patriot ? 'patriot' : 'found';
   }
   get time() { return this.elapsed + this.dags * DAG_SECONDS; }

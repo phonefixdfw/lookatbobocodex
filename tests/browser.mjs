@@ -86,7 +86,8 @@ async function approach(page,spot,which,live=false){
       const moved=boboTest.move(x-pose.x,z-pose.z);
       if(Math.hypot(moved.x-x,moved.z-z)>.05)return {error:'Movement did not reach '+x+','+z,pose:moved};
     }
-    return {hit:boboTest.aim(which),result:boboTest.shout()};
+    const pose=boboTest.read().pose;
+    return {pose,hit:boboTest.aim(which),result:boboTest.shout()};
   },{route,which});
 }
 
@@ -152,7 +153,10 @@ try {
   const target=await page.evaluate(()=>boboTest.read().decoy);
   const first=await approach(page,target,'decoy',true);
   assert.equal(first.result,'dag',JSON.stringify(first));
-  assert.equal(await page.evaluate(()=>boboTest.read().score),-1);
+  const dag=await page.evaluate(()=>boboTest.read());
+  assert.equal(dag.score,-1);
+  assert.equal(dag.pose.x,first.pose.x,'wrong cat should leave the player in place');
+  assert.equal(dag.pose.z,first.pose.z);
   assert.equal(await page.evaluate(()=>boboTest.read().time),5.5);
   const visit=[];
   for(let i=0;i<13;i++){
@@ -163,6 +167,9 @@ try {
     assert.equal(step.hit,'bobo',JSON.stringify({current,step}));
     assert(['found','patriot','win'].includes(step.result),JSON.stringify(step));
     if(step.result==='win')break;
+    const moved=await page.evaluate(()=>boboTest.read());
+    assert.deepEqual([moved.pose.x,moved.pose.z],[moved.spawn.x,moved.spawn.z],'scoring should relocate the player to their new spawn');
+    assert(Math.hypot(moved.pose.x-step.pose.x,moved.pose.z-step.pose.z)>=1.65,'scoring should move the player away from the find');
   }
   assert.equal(visit[1],special.lap.id);
   assert.notEqual(visit[0],special.lap.id);
