@@ -2,19 +2,8 @@ import * as T from 'three';
 import { makeApartment } from './apartment.js';
 import { catMaterials, makeCat, makeOwner, makeVacuum, headY } from './characters.js';
 import { makeKart } from './kart.js';
-import { DRAW_CAP, EYE, START, roomAt, vacuumAt } from './layout.js';
+import { DRAW_CAP, EYE, START, vacuumAt } from './layout.js';
 
-const indoorOpen = ['living','dining','kitchen','landing'];
-const seeRooms = {
-  living:[...indoorOpen,'hall','patio'],
-  dining:[...indoorOpen,'hall','patio'],
-  kitchen:[...indoorOpen,'hall','patio'],
-  landing:[...indoorOpen,'hall','patio'],
-  patio:[...indoorOpen,'patio'],
-  hall:[...indoorOpen,'hall','bedroom','bath','patio'],
-  bedroom:['bedroom','hall','living','kitchen','bath'],
-  bath:['bath','hall','bedroom','living','kitchen'],
-};
 const FOV=67;
 
 export function makeScene(canvas, config) {
@@ -33,7 +22,7 @@ export function makeScene(canvas, config) {
   const target=new T.Vector3();
   const center=new T.Vector3();
   const view=new T.Vector3();
-  const hemisphere=new T.HemisphereLight('#fff0d8','#b99480',2.06);
+  const hemisphere=new T.HemisphereLight('#fff0d8','#cbb6a8',2.06);
   scene.add(hemisphere);
   const sun=new T.DirectionalLight('#ffdeaa',2.38);
   sun.position.set(3.5,3.9,-4.0);
@@ -49,6 +38,9 @@ export function makeScene(canvas, config) {
   const kart=makeKart();
   const castMeshes=Object.values(groups).flatMap(group=>group.children.filter(mesh=>mesh.userData.surface!=='shadow'));
   const bounds=Object.fromEntries(Object.entries(groups).map(([id,group])=>[id,new T.Box3().setFromObject(group)]));
+  for(const group of [...Object.values(groups),city]){
+    group.children.forEach(mesh=>{mesh.frustumCulled=config.cull;});
+  }
   scene.add(owner,vacuum,kart.monitor);
   const cats=new Map();
   let bobo, decoy, modelSpot, modelDecoy, isPatriot, hero = false;
@@ -132,14 +124,11 @@ export function makeScene(canvas, config) {
   function prepareVisibility(){
     vp.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);
     frustum.setFromProjectionMatrix(vp);
-    const active=roomAt(camera.position.x,camera.position.z)??'living';
-    const around=seeRooms[active];
     for(const [name,group] of Object.entries(groups)){
-      group.visible=!config.cull || (around.includes(name) && frustum.intersectsBox(bounds[name]));
-      group.children.forEach(mesh=>{mesh.frustumCulled=config.cull;});
+      // A far room can be visible through two doorways. Cull only batches outside the camera frustum.
+      group.visible=!config.cull || frustum.intersectsBox(bounds[name]);
     }
-    city.visible=!config.cull || (around.includes('patio') && frustum.intersectsObject(city.children[0]));
-    city.children[0].frustumCulled=config.cull;
+    city.visible=!config.cull || frustum.intersectsObject(city.children[0]);
   }
 
   function clearTo(to,from=camera.position){
@@ -232,6 +221,7 @@ export function makeScene(canvas, config) {
 
   return {
     player,resize,render,reset,respawn,sync,heroView,hit,aim,probe,apply,updatePose,catTarget,
+    unobstructed(x,y,z){return clearTo(target.set(x,y,z));},
     look(dx,dy,sensitivity=1){
       player.yaw-=dx*.0026*sensitivity;
       player.pitch=T.MathUtils.clamp(player.pitch-dy*.0026*sensitivity,-1.42,1.42);
