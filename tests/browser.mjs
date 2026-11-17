@@ -214,6 +214,9 @@ try {
 
   const mobile=await pageFor('?test=on&quality=low&touch=on&music=off',devices['iPhone 13']);
   await screenshot(mobile,'mobile-splash');
+  await mobile.setViewportSize({width:320,height:650});
+  assert(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'splash overflows a compact phone');
+  await mobile.setViewportSize({width:390,height:664});
   await start(mobile);
   await screenshot(mobile,'mobile-play');
   const layout=await mobile.evaluate(()=>{

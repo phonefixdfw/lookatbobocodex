@@ -131,9 +131,9 @@ kbd { display: inline-block; padding: .14em .39em; margin-right: .23em; border-r
   .landing { display: flex; flex-direction: column; padding-block: 17px 23px; gap: 19px; }
   .intro { align-self: stretch; display: contents; }
   .intro > .kicker { order: 0; padding-top: 4px; }
-  h1 { order: 1; font-size: clamp(57px,15vw,92px); line-height: .85; margin: -7px 0 -3px -.055em; }
+  h1 { order: 1; font-size: clamp(42px,14.4vw,86px); line-height: .85; margin: -7px 0 -3px -.055em; }
   h1 > span, h1 em { display: inline-block; }
-  h1 em { font-size: .97em; margin-left: .105em; }
+  h1 em { font-size: .97em; margin-left: .15em; }
   .picture { order: 2; min-height: 0; height: clamp(210px,63vw,350px); border-radius: 9px; }
   .photo-label { bottom: 11px; left: 11px; padding: 8px 9px; font-size: 10px; }
   .lead { order: 3; max-width: 44ch; font-size: 15px; }
