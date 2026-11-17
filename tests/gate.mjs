@@ -76,7 +76,11 @@ function connects(from,to,standing){
 const testCanStand=fault==='blocked-dining'?(x,z,r)=>x<6.36||x>6.44?canStand(x,z,r):false:canStand;
 assert(connects(5.75,7, testCanStand),'living-to-dining route must clear 0.90 m');
 assert(connects(9.83,11.05,canStand),'kitchen-to-dining route must clear 0.90 m');
-assert.equal(rooms.hall[3]-rooms.hall[1],2.4000000000000004);
+assert(Math.abs(rooms.hall[3]-rooms.hall[1]-2.40)<1e-8);
+assert(Array.from({length:41},(_,index)=>7.8+index*.09).every(z=>canStand(12.14,z,.45)),
+  'bathroom entry must stay clear for 0.90 m from hall to the inside aisle');
+assert(Array.from({length:57},(_,index)=>9.23+index*.10).every(x=>canStand(x,11.38,.45)),
+  'bathroom aisle must stay clear between bath, vanity, and WC');
 for(let distance=0;distance<vacuumLength;distance+=.05){
   const current=vacuumAt(distance/VACUUM_SPEED,0);
   assert(canStand(current.x,current.z,.19),'vacuum route obstructed at '+JSON.stringify(current));

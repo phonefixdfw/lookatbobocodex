@@ -419,5 +419,6 @@ if(query.test && scene){
     aim(which){const target=scene.catTarget(which);scene.aim(...target);return scene.hit();},
     point(x,y,z){scene.aim(x,y,z);},
     render(){scene.render(run?.elapsed??0);},
+    unobstructed(...target){return scene.unobstructed(...target);},
   };
 }

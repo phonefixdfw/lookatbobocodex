@@ -17,4 +17,6 @@ North is at the top. Game coordinates measure metres, with **x** east, **z** sou
 
 The two dining approaches cross open boundaries on the living and kitchen sides. The gate tests each with a 0.45 m radius. The bedroom, bathroom, and patio openings are 1.25 m, 1.30 m, and 1.53 m before trim. Player eye level is 1.63 m and collision radius is 0.24 m. The dining tabletop and desk are 0.75 m above the floor, and walls rise 2.80 m.
 
+The bathroom has a clear central aisle from the hall, a tub and curtain in the west wet zone, a vanity to the southeast, and a low privacy divider at the WC. The linen cabinet and divider footprints are shown in the plan. The gate measures a 0.90 m route from the hall into the bathroom and across the fixture zones.
+
 The [layout table](../app/game/layout.js) holds the room bounds, furnishings, walls, resting heights, cat poses, and closed Roomba route. Regenerate the drawing with `node scripts/floor-plan.mjs` after a layout change.

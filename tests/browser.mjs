@@ -110,6 +110,44 @@ try {
   await same.close();
   console.log('Byte-identical splash '+splash.slice(0,16)+' and play '+playing.slice(0,16)+' captures.');
 
+  const viewParams='?gate=off&test=on&roomba=off&patriot=off&lap=off';
+  const viewSize={...desktop,viewport:{width:920,height:575}};
+  const culled=await pageFor(viewParams,viewSize);
+  const unculled=await pageFor(viewParams+'&cull=off',viewSize);
+  await start(culled);
+  await start(unculled);
+  const views=[
+    {label:'balcony',position:[4.78,-1.15],lookAt:[6.05,1.28,9.6]},
+    {label:'balcony-threshold-outside',position:[4.78,-.14],lookAt:[6.05,1.28,9.6]},
+    {label:'balcony-threshold-inside',position:[4.78,.13],lookAt:[6.05,1.28,9.6]},
+    {label:'living-to-hall',position:[5.10,5.44],lookAt:[6.05,1.28,9.6]},
+    {label:'hall-to-bedroom',position:[6.04,7.07],lookAt:[6.15,1.28,10.9]},
+    {label:'hall-to-bath',position:[12.13,7.93],lookAt:[12.09,1.04,13.21]},
+    {label:'bath-threshold',position:[12.13,8.94],lookAt:[11.55,1.06,13.14]},
+    {label:'bath',position:[12.06,10.63],lookAt:[10.75,.98,13.15]},
+    {label:'bath-vanity',position:[12.03,11.09],lookAt:[14.32,1.13,13.18]},
+  ];
+  for(const shot of views){
+    const aim=view=>view.evaluate(({position,lookAt})=>{
+      boboTest.pose(...position);
+      boboTest.point(...lookAt);
+      boboTest.render();
+      return {rooms:boboTest.read().metrics.visibleRooms,clear:boboTest.unobstructed(...lookAt)};
+    },shot);
+    const [visible]=await Promise.all([aim(culled),aim(unculled)]);
+    if(shot.label==='balcony')assert(visible.rooms.includes('bedroom'),'balcony view must keep the room behind the hall doorway');
+    if(!['bath','bath-vanity'].includes(shot.label))assert(visible.clear,'doorway should be open in '+shot.label);
+    const captureNames=['balcony','bath','bath-vanity'];
+    const [rendered,reference]=await Promise.all([
+      screenshot(culled,captureNames.includes(shot.label)?shot.label:undefined),
+      screenshot(unculled),
+    ]);
+    assert.equal(digest(rendered),digest(reference),'culling changed visible geometry at '+shot.label);
+  }
+  await culled.close();
+  await unculled.close();
+  console.log('Culling matches the unculled scene from nine real views, including the balcony-to-hall sightline.');
+
   // Geometry is checked by aiming real rendered cat meshes from collision-reachable coordinates.
   const movingChecks=Array.from({length:24},(_,i)=>{
     const {x,z}=vacuumAt(vacuumLength*i/(24*VACUUM_SPEED),0);

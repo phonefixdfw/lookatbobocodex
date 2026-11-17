@@ -52,6 +52,10 @@ export class Batch {
   cushion(x,y,z,w,h,d,tint,opts) { this.add(this.soft,x,y,z,w,h,d,tint,opts); }
   oval(x,y,z,w,h,d,tint,opts) { this.add(this.ball,x,y,z,w/2,h/2,d/2,tint,opts); }
   cyl(x,y,z,w,h,d,tint,opts) { this.add(this.round,x,y,z,w,h,d,tint,opts); }
+  ring(x,y,z,w,h,d,tint,opts) {
+    if(!this.rim)this.rim=new T.TorusGeometry(1,.155,8,24).rotateX(-Math.PI/2);
+    this.add(this.rim,x,y,z,w/2,h/2,d/2,tint,opts);
+  }
   line(a,b,diameter,tint,key='solid') {
     const start = new T.Vector3(...a);
     const end = new T.Vector3(...b);
