@@ -234,7 +234,7 @@ function shout(){
   scene.updatePose(run.elapsed);
   if(run.elapsed-lastShout<.43)return 'cooldown';
   lastShout=run.elapsed;
-  const result=run.shout(scene.hit());
+  const result=run.shout(scene.hit(),scene.player);
   audio.speak('shout');
   if(query.touch){
     const control=el('shout');
@@ -252,7 +252,10 @@ function shout(){
     if(result==='win'){
       audio.speak('win');
       win();
-    }else scene.sync(run);
+    }else{
+      scene.respawn(run);
+      scene.render(run.elapsed);
+    }
   }
   updateHud();
   return result;
@@ -406,7 +409,7 @@ if(query.test && scene){
   window.boboTest={
     config:query,start,shout,pause,resume,
     read:()=>({mode,spot:run?.spot,decoy:run?.decoySpot,patriot:run?.patriot,score:run?.score,dags:run?.dags,time:run?.time,
-      elapsed:run?.elapsed,phase:run?.phase,found:run?.found,pose:scene.hudPose,metrics:scene.metrics,audio:audio.status(),
+      elapsed:run?.elapsed,phase:run?.phase,found:run?.found,spawn:run?.playerSpawn,pose:scene.hudPose,metrics:scene.metrics,audio:audio.status(),
       bobo:scene.bobo?.position.toArray(), hit:scene.hit()}),
     tick(seconds){if(mode==='playing'){run.tick(seconds);scene.sync(run);scene.render(run.elapsed);}},
     pose(x,z,yaw=0,pitch=0){Object.assign(scene.player,{x,z,yaw,pitch});scene.updatePose(run.elapsed);},
