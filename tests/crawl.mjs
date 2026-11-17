@@ -11,6 +11,13 @@ try{
   assert(index.ok);
   const html=await index.text();
   assert.match(html,/<title>Look at Bobo!<\/title>/);
+  const build=html.match(/data-build="([a-f0-9]{20})"/)?.[1];
+  assert(build,'the home screen must identify its build');
+  for(const entry of ['game/main.js','style.css','vendor/three.module.js']){
+    assert(html.includes('./release/'+build+'/'+entry),'home page must use the versioned '+entry);
+  }
+  const worker=await (await fetch(new URL('sw.js',url))).text();
+  assert(worker.startsWith('const BUILD = "'+build+'"'),'service worker and app must identify the same build');
   const manifest=await (await fetch(new URL('manifest.webmanifest',url))).json();
   assert.equal(manifest.display,'standalone');
   assert.equal(manifest.scope,'./');

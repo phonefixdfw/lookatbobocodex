@@ -23,6 +23,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid #9b613c; outline-
   display: flex; justify-content: space-between; align-items: center;
   border-bottom: 1px solid var(--line);
 }
+.home-tools { display: flex; align-items: center; gap: 11px; }
+.build-version { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .brand { display: flex; align-items: center; gap: 11px; font-size: 16px; font-weight: 800; letter-spacing: -.04em; }
 .paw { position: relative; display: inline-block; width: 33px; height: 33px; border-radius: 50%; background: var(--green); transform: rotate(-12deg); }
 .paw i, .paw b { background: #f8e7cc; position: absolute; display: block; border-radius: 60% 60% 55% 55%; }
@@ -128,6 +130,8 @@ kbd { display: inline-block; padding: .14em .39em; margin-right: .23em; border-r
 @media (max-width: 620px) {
   .shell { padding: max(0px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(0px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left)); }
   .masthead { height: 63px; }
+  .home-tools { gap: 7px; }
+  .build-version { font-size: 10px; }
   .landing { display: flex; flex-direction: column; padding-block: 17px 23px; gap: 19px; }
   .intro { align-self: stretch; display: contents; }
   .intro > .kicker { order: 0; padding-top: 4px; }

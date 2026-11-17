@@ -5,6 +5,15 @@ import { makeAudio } from './audio.js';
 
 const el=id=>document.getElementById(id);
 const shell=el('shell'), game=el('game'), stage=el('stage'), canvas=el('world');
+const release=new URL(import.meta.url).pathname.match(/\/release\/([a-f0-9]{20})\/game\/main\.js$/)?.[1];
+if(release){
+  const version=el('build-version');
+  if(version){
+    version.textContent='Build '+release.slice(0,8);
+    version.title=release;
+    version.hidden=false;
+  }
+}
 const panel=el('panel'), body=el('panel-body'), status=el('status'), reticle=el('reticle');
 const coarse=matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints>1;
 const query=options(location.search,coarse,crypto.getRandomValues(new Uint32Array(1))[0]);
@@ -303,7 +312,9 @@ if(scene)requestAnimationFrame(frame);
 if('serviceWorker' in navigator && !query.capture){
   // Register only after the page has loaded, so precaching cannot delay the first frame.
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register(new URL('../sw.js',import.meta.url)).catch(()=>{});
+    const worker=new URL('sw.js',document.baseURI);
+    if(release)worker.searchParams.set('v',release);
+    navigator.serviceWorker.register(worker,{updateViaCache:'none'}).catch(()=>{});
   },{once:true});
 }
 

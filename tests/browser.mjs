@@ -96,6 +96,16 @@ try {
   await mkdir(output,{recursive:true});
   const page=await pageFor(exact);
   const same=await pageFor(exact);
+  const version=page.locator('#build-version');
+  const build=await version.getAttribute('data-build');
+  assert.match(build,/^[a-f0-9]{20}$/);
+  assert.equal(await version.textContent(),'Build '+build.slice(0,8));
+  assert.equal(await version.getAttribute('title'),build);
+  assert(await version.isVisible());
+  const modules=await page.evaluate(()=>performance.getEntriesByType('resource')
+    .map(entry=>new URL(entry.name).pathname).filter(path=>path.endsWith('.js')));
+  assert(modules.length>10 && modules.every(path=>path.startsWith('/release/'+build+'/')),
+    'a fresh game must load its entire module graph under its own release path');
   const splash=digest(await screenshot(page,'splash'));
   assert.equal(splash,digest(await screenshot(same)),'splash frames must be byte-identical');
   await start(page);
@@ -144,6 +154,22 @@ try {
     ]);
     assert.equal(digest(rendered),digest(reference),'culling changed visible geometry at '+shot.label);
   }
+  const sampledFrames=await culled.evaluate(()=>{
+    const sightline=[6.23,1.20,12.80];
+    boboTest.pose(6.25,6.10);
+    const sampled=[];
+    for(let step=0;step<=12;step++){
+      boboTest.point(...sightline);
+      boboTest.render();
+      const {pose,metrics}=boboTest.read();
+      sampled.push({z:pose.z,bedroom:metrics.visibleRooms.includes('bedroom'),clear:boboTest.unobstructed(...sightline)});
+      boboTest.move(0,.04);
+    }
+    return sampled;
+  });
+  assert(sampledFrames[0].z<6.4&&sampledFrames.at(-1).z>6.4,'approach must cross the living room–hall boundary');
+  assert(sampledFrames.every(frame=>frame.bedroom&&frame.clear),
+    'the bedroom doorway must remain visible while walking from the living room into the hall');
   await culled.close();
   await unculled.close();
   console.log('Culling matches the unculled scene from nine real views, including the balcony-to-hall sightline.');
@@ -324,9 +350,10 @@ try {
     await offline.waitForFunction(()=>Boolean(navigator.serviceWorker.controller),null,{timeout:12000});
     const cached=await offline.evaluate(async()=>{
       const registration=await navigator.serviceWorker.ready;
-      return {scope:registration.scope,files:await caches.keys()};
+      return {scope:registration.scope,script:registration.active.scriptURL,files:await caches.keys()};
     });
     assert.equal(cached.scope,subsite.url);
+    assert.equal(new URL(cached.script).searchParams.get('v'),build,'worker request must bypass an older CDN entry');
     assert(cached.files.some(name=>name.startsWith('look-at-bobo:/lookatbobocodex/:')));
     await offline.context().setOffline(true);
     await offline.goto(path);
