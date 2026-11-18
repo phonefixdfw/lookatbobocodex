@@ -10,7 +10,7 @@ const RINGS={
 };
 const PATRIOT_COLORS=['#d95053','#fff0dc','#658fdf','#f4b765'];
 
-export function makeCelebration(canvas){
+export function makeCelebration(canvas,capture=false){
   const ctx=canvas?.getContext('2d');
   const motion=matchMedia('(prefers-reduced-motion: reduce)');
   let frame=0,clearTimer=0,sequence=0;
@@ -36,7 +36,7 @@ export function makeCelebration(canvas){
     const patriotic=kind==='patriot';
     const lifetime=patriotic?1070:580;
     const radius=Math.min(width,height);
-    const rng=random(++sequence*0x5b0b);
+    const rng=random((capture?1:++sequence)*0x5b0b);
     const colors=patriotic?PATRIOT_COLORS:['#e5a951','#f9e2a9','#fff2d4'];
     const bursts=RINGS[kind].map(burst=>({...burst, sparks:Array.from({length:burst.count},(_,i)=>({
       angle:Math.PI*2*(i+rng()*.56)/burst.count,
@@ -68,9 +68,9 @@ export function makeCelebration(canvas){
       ctx.globalAlpha=1;
     }
 
-    if(motion.matches){
+    if(capture||motion.matches){
       paint(0,true);
-      clearTimer=setTimeout(clear,patriotic?1350:500);
+      if(!capture)clearTimer=setTimeout(clear,patriotic?1350:500);
       return;
     }
     const start=performance.now();
