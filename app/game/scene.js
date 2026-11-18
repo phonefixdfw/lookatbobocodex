@@ -166,7 +166,7 @@ export function makeScene(canvas, config) {
   function meshes(cat) {
     const found=[];
     cat?.traverse(object=>{
-      if(object.isMesh && object.userData.surface!=='shadow')found.push(object);
+      if(object.isMesh && object.userData.surface!=='shadow' && object.userData.aimable!==false)found.push(object);
     });
     return found;
   }

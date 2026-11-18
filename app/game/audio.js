@@ -117,8 +117,14 @@ export function makeAudio(musicEnabled=true, muted=false) {
   function reward(kind){
     noteLog('effect:'+kind);
     if(!audio||muted)return;
-    const tones=kind==='dag'?[55,49]:kind==='patriot'||kind==='win'?[67,72,76,79]:[69,74,81];
-    tones.forEach((tone,i)=>pluck(tone,audio.currentTime+.045*i,.25,.078,master,'sine'));
+    const start=audio.currentTime;
+    if(kind==='patriot'){
+      [67,72,76,79,84].forEach((tone,i)=>pluck(tone,start+.048*i,.28,.080,master,'sine'));
+      [55,62,67].forEach(tone=>pluck(tone,start+.18,.34,.035,master,'triangle'));
+      return;
+    }
+    const tones=kind==='dag'?[55,49]:kind==='win'?[67,72,76,79]:[69,74,81];
+    tones.forEach((tone,i)=>pluck(tone,start+.045*i,.25,.078,master,'sine'));
   }
 
   return {unlock,setActive,speak,reward,

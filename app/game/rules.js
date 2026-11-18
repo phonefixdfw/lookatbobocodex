@@ -3,6 +3,7 @@ import { decoySpots, playerSpawns, START, spots, special, vacuumAt, vacuumLength
 export const GOAL = 10;
 export const BREEZE_WIN = 'your did it! you wind';
 export const DAG_SECONDS = 5;
+export const PATRIOT_CHANCE = .40;
 export const LEADERBOARD = 'look-at-bobo.times.v1';
 const finiteInt = (raw, fallback) => raw !== null && /^-?\d+$/.test(raw) && Number.isSafeInteger(Number(raw)) ? Number(raw) : fallback;
 
@@ -65,7 +66,7 @@ export class Run {
     this.lapAt = config.lap === 'off' ? 0 : Number.isInteger(config.lap)
       ? Math.max(2, config.lap) : config.lap === 'on' || lapChance < .20 ? 2+Math.floor(this.rng()*4) : 0;
     this.patriotAt = config.patriot === 'off' ? 0 : config.patriot === 'on'
-      ? 2 : this.rng() < .16 ? 3+Math.floor(this.rng()*5) : 0;
+      ? 2 : this.rng() < PATRIOT_CHANCE ? 2+Math.floor(this.rng()*7) : 0;
     this.vacuumAt = config.roomba && this.rng() < .35 ? 3+Math.floor(this.rng()*5) : 0;
     this.score = 0;
     this.dags = 0;

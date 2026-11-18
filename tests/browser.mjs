@@ -190,6 +190,16 @@ try {
   assert.equal(planted[0].witness,null);
   console.log('Reachability and ray tests passed for '+checks.length+' staged cases, plus a planted occlusion fault.');
 
+  await page.evaluate(()=>{
+    boboTest.spot({id:'patriot-heat-pad',x:2.23,y:.509,z:1.65,pose:'sit'},null,true);
+    boboTest.pose(2.60,2.65);
+    boboTest.point(2.23,.83,1.65);
+    boboTest.render();
+  });
+  assert.deepEqual(await page.evaluate(()=>boboTest.costume()),
+    ['American flag','American flag','Bald eagle and flagpoles']);
+  await screenshot(page,'patriot-bobo');
+
   await page.reload();
   await start(page);
   await page.keyboard.press('KeyP');
@@ -232,6 +242,13 @@ try {
     assert(['found','patriot','win'].includes(step.result),JSON.stringify(step));
     if(step.result==='win')break;
     const moved=await page.evaluate(()=>boboTest.read());
+    if(current.patriot){
+      assert.equal(step.result,'patriot');
+      assert.equal(moved.score-current.score,3);
+      assert(moved.audio.events.includes('effect:patriot'));
+      assert.equal(await page.locator('#fireworks').getAttribute('data-effect'),'patriot');
+      assert.match(await page.locator('#status').textContent(),/MAGA Bobo.*\+3/);
+    }
     assert.deepEqual([moved.pose.x,moved.pose.z],[moved.spawn.x,moved.spawn.z],'scoring should relocate the player to their new spawn');
     assert(Math.hypot(moved.pose.x-step.pose.x,moved.pose.z-step.pose.z)>=1.65,'scoring should move the player away from the find');
   }
@@ -241,6 +258,29 @@ try {
   assert.equal(await page.evaluate(key=>localStorage.getItem(key),LEADERBOARD),null);
   await screenshot(page,'win');
   console.log('Scripted bot reached ten points via collision movement, including a wrong-cat penalty and a Patriot lap find.');
+
+  const bonusWin=await pageFor('?test=on&clock=manual&seed=32&roomba=off&lap=off&music=off',
+    {...desktop,reducedMotion:'no-preference'});
+  await start(bonusWin);
+  await bonusWin.waitForFunction(()=>boboTest.read().audio.loaded.includes('win'));
+  for(let n=0;n<8;n++){
+    await bonusWin.evaluate(()=>boboTest.tick(.65));
+    const before=await bonusWin.evaluate(()=>boboTest.read());
+    assert.equal(before.patriot,n===7,'the natural seed should schedule a Patriot winning find');
+    const result=await approach(bonusWin,before.spot,'bobo',true);
+    assert.equal(result.result,n===7?'win':'found',JSON.stringify(result));
+    if(n===7){
+      const after=await bonusWin.evaluate(()=>boboTest.read());
+      assert.equal(after.score-before.score,3);
+      assert(after.audio.events.includes('effect:patriot')&&after.audio.events.includes('win'));
+      assert.equal(await bonusWin.locator('#fireworks').getAttribute('data-effect'),'patriot');
+    }
+  }
+  await bonusWin.getByRole('heading',{name:BREEZE_WIN,exact:true}).waitFor();
+  await bonusWin.getByText('MAGA Bobo · +3 points').waitFor();
+  await screenshot(bonusWin,'patriot-win');
+  await bonusWin.close();
+  console.log('Natural Patriot final find adds three, fires the larger celebration, and plays the packaged win line.');
 
   const riding=await pageFor('?test=on&clock=manual&seed=2&lap=off&patriot=off&quality=low');
   await start(riding);

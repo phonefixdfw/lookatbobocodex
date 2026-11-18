@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { DRAW_CAP, START, canStand, decoySpots, playerSpawns, rooms, roomAt, roomLinks, spots, vacuumAt, vacuumLength, VACUUM_SPEED } from '../app/game/layout.js';
-import { BREEZE_WIN, GOAL, LEADERBOARD, Run, options, readTimes, saveTime } from '../app/game/rules.js';
+import { BREEZE_WIN, GOAL, LEADERBOARD, PATRIOT_CHANCE, Run, options, readTimes, saveTime } from '../app/game/rules.js';
 import { navigation } from './navigation.mjs';
 
 const fault=process.argv[2];
@@ -41,6 +41,11 @@ assert.equal(forced.spot.lap,true);
 assert.equal(forced.patriot,true);
 assert.equal(forced.shout('bobo'),'patriot');
 assert.equal(forced.score,4);
+const lastFind=new Run(options('?seed=11&lap=off&patriot=on',false,0));
+lastFind.shout('bobo');
+lastFind.score=8;
+assert.equal(lastFind.shout('bobo'),'win');
+assert.equal(lastFind.score,11,'a Patriot final find still adds three points');
 assert.equal(DRAW_CAP,250,'shared draw cap changed');
 const storage=new Map();
 const fakeStorage={getItem:key=>storage.get(key),setItem:(key,value)=>storage.set(key,value)};
@@ -93,20 +98,25 @@ const decoys=new Map(decoySpots.map(spot=>[spot.id,0]));
 let lapCount=0,patriotCount=0,vacuumCount=0;
 for(let seed=1;seed<=800;seed++){
   const game=new Run(options('?seed='+seed,false,0));
-  let previous=null,other=null;
+  let previous=null,other=null,patriots=0;
   assert(!game.spot.lap,'lap before first find');
   while(!game.won){
     const active=fault==='repeat-spot' && previous?previous:game.spot.id;
     assert.notEqual(active,previous,'Bobo spot repeated');
     assert.notEqual(game.decoySpot.id,other,'decoy spot repeated');
     if(game.spot.lap)lapCount++;
-    if(game.patriot)patriotCount++;
+    if(game.patriot){
+      assert(game.found>=1&&game.found<=7);
+      patriots++;
+      patriotCount++;
+    }
     if(game.spot.moving)vacuumCount++;
     if(regular.has(active))regular.set(active,regular.get(active)+1);
     decoys.set(game.decoySpot.id,decoys.get(game.decoySpot.id)+1);
     previous=active;other=game.decoySpot.id;
     game.shout('bobo');
   }
+  assert(patriots<=1);
 }
 function even(counts){
   const values=[...counts.values()];
@@ -114,7 +124,7 @@ function even(counts){
 }
 even(regular);even(decoys);
 assert(lapCount>120&&lapCount<205,'lap frequency outside expected 20% range');
-assert(patriotCount>90&&patriotCount<169,'Patriot frequency outside expected range');
+assert(Math.abs(patriotCount/800-PATRIOT_CHANCE)<.06,'Patriot frequency outside the expected 40% range');
 assert(vacuumCount>230&&vacuumCount<329,'Roomba ride frequency outside expected range');
 const dry = new Run(capture);
 for(let i=0;i<9;i++){

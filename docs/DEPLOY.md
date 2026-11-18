@@ -27,7 +27,7 @@ On iPhone or iPad, open the HTTPS URL in Safari, choose Share → Add to Home Sc
 | `quality=low` | Cheaper rendering path |
 | `cull=off` | Disable room and frustum culling |
 | `touch=on\|off` | Override touch input detection |
-| `patriot=on\|off` | Force the second encounter or disable the cap |
+| `patriot=on\|off` | Force MAGA Bobo on the second encounter or disable the variant |
 | `music=off` | Disable the bardcore track |
 | `roomba=off` | Disable the vacuum and its ride |
 | `lap=on\|off\|N` | Enable, disable, or choose an encounter index of two or later |
