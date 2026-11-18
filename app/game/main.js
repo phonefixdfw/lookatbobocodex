@@ -95,10 +95,11 @@ function goHome(){
 }
 
 function lockPointer(){
-  if(query.touch || query.test || query.capture || document.pointerLockElement || !canvas.requestPointerLock)return;
+  if(mode!=='playing' || query.touch || query.test || query.capture || document.pointerLockElement || !canvas.requestPointerLock)return;
   try{canvas.requestPointerLock()?.catch(()=>{});}catch{/* drag to look works without lock */}
 }
 function unlockPointer(){
+  wasLocked=false;
   if(document.pointerLockElement)document.exitPointerLock();
 }
 function clearInput(){
@@ -190,9 +191,13 @@ function showSettings(){
     actions(button('Back',mode==='paused'?showPause:dismiss,true)),
   );
 }
+function timesStorage(){
+  try{return window.localStorage;}catch{return null;}
+}
 function showScores(){
   openPanel('scores','Best times');
-  const saved=readTimes(localStorage);
+  const storage=timesStorage();
+  const saved=storage?readTimes(storage):[];
   if(saved.length){
     const list=document.createElement('ol');list.className='records';
     for(const entry of saved){
@@ -202,8 +207,15 @@ function showScores(){
       item.append(details);list.append(item);
     }
     body.append(list);
-  }else body.append(paragraph('Finish a run to set your first time.'));
-  body.append(paragraph('Times are saved on this browser. Each DAG! adds five seconds.'),actions(button('Done',dismiss,true)));
+  }else{
+    body.append(paragraph(storage?'Finish a run to set your first time.':'Best times are unavailable in this browser session.'));
+  }
+  if(storage)body.append(paragraph('Times are saved on this browser. Each DAG! adds five seconds.'));
+  const back=mode==='won'?button('Back to results',showWin):button('Done',dismiss,true);
+  if(mode==='won'){
+    body.append(actions(button('Play again',start,true),back));
+  }else body.append(actions(back));
+  back.focus();
 }
 function showInstall(){
   openPanel('install','Install the game');
@@ -216,6 +228,7 @@ function showInstall(){
 function closeMenu(){
   if(panelKind==='pause')resume();
   else if(panelKind==='settings'&&mode==='paused')showPause();
+  else if(panelKind==='scores'&&mode==='won')showWin();
   else if(panelKind==='win')goHome();
   else dismiss();
 }
@@ -235,18 +248,26 @@ function notice(message,tone=''){
   status.className='status show '+tone;
   status.textContent=message;
 }
-function win(patriot){
-  mode='won';
-  clearInput();unlockPointer();updateAudio();
-  if(!query.capture && !query.test)saveTime(localStorage,run);
+function showWin(){
   openPanel('win',BREEZE_WIN);
-  if(patriot){
+  if(run.patriot){
     const award=paragraph('MAGA Bobo · +3 points');
     award.className='patriot-award';
     body.append(award);
   }
+  const replay=button('Play again',start,true);
   body.append(paragraph('Bobo points '+GOAL+' / '+GOAL+' · '+formatTime(run.time,true)+' · '+run.dags+' DAG!'),
-    actions(button('Play again',start,true),button('Best times',showScores),button('Main menu',goHome)));
+    actions(replay,button('Best times',showScores),button('Main menu',goHome)));
+  replay.focus();
+}
+function win(){
+  mode='won';
+  clearInput();unlockPointer();updateAudio();
+  showWin();
+  if(!query.capture && !query.test){
+    const storage=timesStorage();
+    if(storage)saveTime(storage,run);
+  }
 }
 function shout(){
   if(mode!=='playing')return 'inactive';
@@ -272,7 +293,7 @@ function shout(){
     notice(patriot?'MAGA Bobo! +3 points':'Bobo! +1',patriot?'prize':'');
     if(result==='win'){
       audio.speak('win');
-      win(patriot);
+      win();
     }else{
       scene.respawn(run);
       scene.render(run.elapsed);

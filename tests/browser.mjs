@@ -263,6 +263,21 @@ try {
   await page.getByRole('heading',{name:BREEZE_WIN,exact:true}).waitFor();
   assert.equal(await page.evaluate(key=>localStorage.getItem(key),LEADERBOARD),null);
   await screenshot(page,'win');
+  await page.evaluate(()=>{document.documentElement.dataset.replayTest='same-document';});
+  await page.getByRole('button',{name:'Best times'}).click();
+  await page.getByRole('button',{name:'Back to results'}).click();
+  await page.getByRole('heading',{name:BREEZE_WIN,exact:true}).waitFor();
+  await page.getByRole('button',{name:'Best times'}).click();
+  await page.keyboard.press('Escape');
+  await page.getByRole('heading',{name:BREEZE_WIN,exact:true}).waitFor();
+  await page.getByRole('button',{name:'Best times'}).click();
+  await page.getByRole('button',{name:'Play again'}).click();
+  const restarted=await page.evaluate(()=>boboTest.read());
+  assert.equal(restarted.mode,'playing');
+  assert.equal(restarted.spot.id,visit[0]);
+  assert.deepEqual([restarted.score,restarted.dags,restarted.elapsed,restarted.found],[0,0,0,0]);
+  assert.equal(await page.locator('html').getAttribute('data-replay-test'),'same-document');
+  assert.equal(await page.getByRole('dialog').count(),0);
   console.log('Scripted bot reached ten points via collision movement, including a wrong-cat penalty and a Patriot lap find.');
 
   const bonusWin=await pageFor('?test=on&clock=manual&seed=32&roomba=off&lap=off&music=off',
@@ -273,6 +288,12 @@ try {
     await bonusWin.evaluate(()=>boboTest.tick(.65));
     const before=await bonusWin.evaluate(()=>boboTest.read());
     assert.equal(before.patriot,n===7,'the natural seed should schedule a Patriot winning find');
+    if(n===7){
+      await bonusWin.evaluate(()=>{
+        Object.defineProperty(window,'localStorage',{get(){throw new DOMException('Storage blocked','SecurityError');}});
+        boboTest.config.test=false; // Exercise the normal save path with storage blocked.
+      });
+    }
     const result=await approach(bonusWin,before.spot,'bobo',true);
     assert.equal(result.result,n===7?'win':'found',JSON.stringify(result));
     if(n===7){
@@ -285,8 +306,16 @@ try {
   await bonusWin.getByRole('heading',{name:BREEZE_WIN,exact:true}).waitFor();
   await bonusWin.getByText('MAGA Bobo · +3 points').waitFor();
   await screenshot(bonusWin,'patriot-win');
+  await bonusWin.evaluate(()=>{boboTest.config.test=true;});
+  await bonusWin.getByRole('button',{name:'Best times'}).click();
+  await bonusWin.getByText('Best times are unavailable in this browser session.').waitFor();
+  await bonusWin.getByRole('button',{name:'Close',exact:true}).click();
+  await bonusWin.getByRole('button',{name:'Play again'}).click();
+  const fresh=await bonusWin.evaluate(()=>boboTest.read());
+  assert.equal(fresh.mode,'playing');
+  assert.equal(fresh.score,0);
   await bonusWin.close();
-  console.log('Natural Patriot final find adds three, fires the larger celebration, and plays the packaged win line.');
+  console.log('Natural Patriot final find earns three and plays the win sequence. Replay works directly and through Best times, including with storage blocked.');
 
   const riding=await pageFor('?test=on&clock=manual&seed=2&lap=off&patriot=off&quality=low');
   await start(riding);
