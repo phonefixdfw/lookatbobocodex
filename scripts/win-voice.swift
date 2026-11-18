@@ -1,7 +1,8 @@
 import AVFoundation
 import Foundation
 
-let line = "Your did it! You wind."
+// The synthesizer can speak punctuation after an IPA-marked word.
+let line = "Your did it! You wind"
 let windRange = (line as NSString).range(of: "wind")
 let speech = NSMutableAttributedString(string: line)
 speech.addAttribute(
