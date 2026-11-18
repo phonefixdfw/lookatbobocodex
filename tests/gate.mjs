@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { DRAW_CAP, START, canStand, decoySpots, playerSpawns, rooms, roomAt, roomLinks, spots, vacuumAt, vacuumLength, VACUUM_SPEED } from '../app/game/layout.js';
+import { DRAW_CAP, START, canStand, decoySpots, doors, playerSpawns, rooms, roomAt, roomLinks, spots, vacuumAt, vacuumLength, VACUUM_SPEED } from '../app/game/layout.js';
 import { BREEZE_WIN, GOAL, LEADERBOARD, PATRIOT_CHANCE, Run, options, readTimes, saveTime } from '../app/game/rules.js';
 import { navigation } from './navigation.mjs';
 
@@ -55,7 +55,7 @@ for(let i=0;i<12;i++){run.elapsed=i;saveTime(fakeStorage,run);}
 assert.deepEqual(readTimes(fakeStorage).map(entry=>entry.time),Array.from({length:10},(_,i)=>i+5));
 
 const nav=navigation();
-assert(canStand(START.x,START.z));
+assert(canStand(START.x,START.z,.45));
 for(const spawn of playerSpawns){
   assert(canStand(spawn.x,spawn.z,.45),'player spawn must have at least 0.90 m clearance: '+spawn.id);
   assert(nav.reachable.some(point=>Math.hypot(point.x-spawn.x,point.z-spawn.z)<.2),'player spawn must be reachable: '+spawn.id);
@@ -72,20 +72,28 @@ for(let find=0;find<8;find++){
 }
 assert.deepEqual(new Set(nav.reachable.map(({x,z})=>roomAt(x,z))),new Set(Object.keys(rooms)),'every named room must have a walkable path');
 for(const [from,to] of Object.entries(roomLinks))for(const room of to)assert(roomLinks[room].includes(from),'room link must work both ways');
-function connects(from,to,standing){
-  for(let z=.5;z<=3.28;z+=.04){
-    if(Array.from({length:31},(_,n)=>from+(to-from)*n/30).every(x=>standing(x,z,.45)))return true;
-  }
-  return false;
+const indoorArea=Object.entries(rooms).reduce((area,[room,[x,z,right,bottom]])=>
+  area+(room==='patio'?0:(right-x)*(bottom-z)),0);
+const [,patioTop,patioRight]=rooms.patio;
+assert((indoorArea-patioTop*patioRight)*10.76391<=1000,'apartment and balcony exceed 1,000 sq ft');
+const [bathLeft,bathTop,bathRight,bathBottom]=rooms.bath;
+assert((bathRight-bathLeft)*(bathBottom-bathTop)<7,'bathroom exceeds 7 square metres');
+assert(rooms.hall[3]-rooms.hall[1]<1.30,'hall should stay under 1.30 m wide');
+
+function clearPath(a,b,standing=canStand){
+  return Array.from({length:31},(_,n)=>n/30).every(t=>standing(a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,.45));
 }
-const testCanStand=fault==='blocked-dining'?(x,z,r)=>x<6.36||x>6.44?canStand(x,z,r):false:canStand;
-assert(connects(5.75,7, testCanStand),'living-to-dining route must clear 0.90 m');
-assert(connects(9.83,11.05,canStand),'kitchen-to-dining route must clear 0.90 m');
-assert(Math.abs(rooms.hall[3]-rooms.hall[1]-2.40)<1e-8);
-assert(Array.from({length:41},(_,index)=>7.8+index*.09).every(z=>canStand(12.14,z,.45)),
-  'bathroom entry must stay clear for 0.90 m from hall to the inside aisle');
-assert(Array.from({length:57},(_,index)=>9.23+index*.10).every(x=>canStand(x,11.38,.45)),
-  'bathroom aisle must stay clear between bath, vanity, and WC');
+const diningWest=rooms.dining[0],diningEast=rooms.dining[2];
+const testCanStand=fault==='blocked-dining'?(x,z,r)=>Math.abs(x-diningWest)>.05&&canStand(x,z,r):canStand;
+assert(clearPath([diningWest-.55,1.98],[diningWest+.47,1.98],testCanStand),'living-to-dining route must clear 0.90 m');
+assert(clearPath([diningEast-.58,2.25],[diningEast+.28,2.25]),'kitchen-to-dining route must clear 0.90 m');
+for(const name of ['patio','hall','bedroom']){
+  const {left,right,z}=doors[name];
+  const center=(left+right)/2;
+  assert(clearPath([center,z-.43],[center,z+.43]),name+' doorway must clear 0.90 m');
+}
+const bathEntry=(doors.bath.left+doors.bath.right)/2;
+assert(clearPath([bathEntry,5.16],[bathEntry,7.00]),'bathroom entry must stay clear for 0.90 m from hall to the fixtures');
 for(let distance=0;distance<vacuumLength;distance+=.05){
   const current=vacuumAt(distance/VACUUM_SPEED,0);
   assert(canStand(current.x,current.z,.19),'vacuum route obstructed at '+JSON.stringify(current));

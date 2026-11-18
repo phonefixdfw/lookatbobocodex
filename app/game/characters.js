@@ -1,5 +1,6 @@
 import * as T from 'three';
 import { Batch, canvas, texture } from './geometry.js';
+import { special } from './layout.js';
 import { random } from './rules.js';
 import { addPatriotAccessories } from './patriot.js';
 
@@ -162,7 +163,7 @@ export function makeOwner(materials,low) {
   }
   b.oval(0,.911,.212,.221,.055,.113,'#302d33',{rx:.26});
   b.oval(.036,.941,.224,.022,.009,.022,'#72796b');
-  group.position.set(1.37,0,1.54);
+  group.position.set(special.lap.x,0,special.lap.z-.38);
   return b.finish(group,'owner');
 }
 

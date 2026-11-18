@@ -1,3 +1,4 @@
+import { television } from './layout.js';
 import * as T from 'three';
 import { canvas, texture } from './geometry.js';
 
@@ -5,8 +6,8 @@ export function makeKart() {
   const image = canvas(384,216);
   const ctx=image.getContext('2d');
   const map=texture(image);
-  const monitor=new T.Mesh(new T.PlaneGeometry(1.55,.792),new T.MeshBasicMaterial({map}));
-  monitor.position.set(1.90,.885,5.922);
+  const monitor=new T.Mesh(new T.PlaneGeometry(television.width-.12,.728),new T.MeshBasicMaterial({map}));
+  monitor.position.set(television.x,.895,television.z-.038);
   monitor.rotation.y=Math.PI;
   monitor.name='KART DASH';
   const hills=(color,horizon,peaks)=>{
