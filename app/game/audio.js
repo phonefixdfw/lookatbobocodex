@@ -6,8 +6,10 @@ const beat=60/TEMPO;
 const voiceLines={
   shout:{file:'look',speech:'Look at Bobo!'},
   dag:{file:'dag',speech:'Dag!'},
-  win:{file:'win',speech:'Your did it! You winned.'},
+  win:{file:'win'},
 };
+
+const voiceURL=kind=>new URL('../assets/'+voiceLines[kind].file+'.wav',import.meta.url);
 
 export function makeAudio(musicEnabled=true, muted=false) {
   let audio=null,master=null,musicBus=null,voiceBus=null, active=false,timer=null,
@@ -21,8 +23,7 @@ export function makeAudio(musicEnabled=true, muted=false) {
 
   function fetchVoice(kind){
     if(!audio || loading.has(kind))return;
-    const {file}=voiceLines[kind];
-    loading.set(kind, fetch(new URL('../assets/'+file+'.wav',import.meta.url))
+    loading.set(kind, fetch(voiceURL(kind))
       .then(response=>response.ok?response.arrayBuffer():Promise.reject(Error('voice sample missing')))
       .then(bytes=>audio.decodeAudioData(bytes))
       .then(buffer=>samples.set(kind,buffer))
@@ -101,6 +102,10 @@ export function makeAudio(musicEnabled=true, muted=false) {
       }
       source.start(audio.currentTime+delayed);
       voices.add(source);source.onended=()=>{voices.delete(source);source.disconnect();};
+    }else if(kind==='win'){
+      const ending=new Audio(voiceURL(kind));
+      ending.volume=volume;
+      ending.play().catch(()=>{});
     }else if(globalThis.speechSynthesis && globalThis.SpeechSynthesisUtterance){
       const speech=new SpeechSynthesisUtterance(voiceLines[kind].speech);
       speech.voice=speechSynthesis.getVoices().find(v=>/Samantha|Karen|female/i.test(v.name))??null;
