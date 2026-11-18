@@ -2,7 +2,7 @@ import * as T from 'three';
 import { makeApartment } from './apartment.js';
 import { catMaterials, makeCat, makeOwner, makeVacuum, headY } from './characters.js';
 import { makeKart } from './kart.js';
-import { DRAW_CAP, EYE, START, vacuumAt } from './layout.js';
+import { DRAW_CAP, EYE, heatPad, START, vacuumAt } from './layout.js';
 
 const FOV=67;
 
@@ -79,9 +79,10 @@ export function makeScene(canvas, config) {
     hero=true;
     const width=camera.aspect;
     camera.fov=width<.85?72:55;
-    camera.position.set(3.20,1.24,2.85);
-    camera.lookAt(1.80,.79,1.34);
-    apply({x:2.23,y:.509,z:1.65,pose:'sit',room:'living'},null,false);
+    const pad=heatPad;
+    camera.position.set(pad.x+.97,1.24,pad.z+1.19);
+    camera.lookAt(pad.x-.43,.79,pad.z-.31);
+    apply({...pad,pose:'sit'},null,false);
     vacuum.visible=false;
   }
 

@@ -1,15 +1,19 @@
-import { canStand, START } from '../app/game/layout.js';
+import { canStand, PLAYER_RADIUS, rooms, START } from '../app/game/layout.js';
 
 const step=.20;
-const startX=.10;
-const startZ=-2.50;
+const clearance=PLAYER_RADIUS+.005;
+const areas=Object.values(rooms);
+const startX=Math.min(...areas.map(([x])=>x))+.10;
+const startZ=Math.min(...areas.map(([,z])=>z))+.10;
+const columns=Math.ceil((Math.max(...areas.map(([, ,x])=>x))-startX)/step);
+const rows=Math.ceil((Math.max(...areas.map(([, , ,z])=>z))-startZ)/step);
 const key=(column,row)=>column+','+row;
 
 export function navigation() {
   const grid=new Map();
-  for(let column=0;column<78;column++)for(let row=0;row<81;row++){
+  for(let column=0;column<columns;column++)for(let row=0;row<rows;row++){
     const x=startX+column*step,z=startZ+row*step;
-    if(canStand(x,z))grid.set(key(column,row),{x,z,column,row});
+    if(canStand(x,z,clearance))grid.set(key(column,row),{x,z,column,row});
   }
   function nearest(position){
     return [...grid.values()].reduce((closest,point)=>{
@@ -25,7 +29,7 @@ export function navigation() {
       const here=queue[index];
       for(const [dc,dr] of [[0,1],[1,0],[0,-1],[-1,0]]){
         const adjacent=grid.get(key(here.column+dc,here.row+dr));
-        if(adjacent && !visited.has(adjacent) && canStand((here.x+adjacent.x)/2,(here.z+adjacent.z)/2)){
+        if(adjacent && !visited.has(adjacent) && canStand((here.x+adjacent.x)/2,(here.z+adjacent.z)/2,clearance)){
           visited.set(adjacent,here);
           queue.push(adjacent);
         }

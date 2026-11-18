@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { chromium, devices } from 'playwright';
-import { decoySpots, DRAW_CAP, EYE, spots, special, vacuumAt, vacuumLength, VACUUM_SPEED } from '../app/game/layout.js';
+import { decoySpots, DRAW_CAP, EYE, rooms, START, spots, special, television, vacuumAt, vacuumLength, VACUUM_SPEED } from '../app/game/layout.js';
 import { LEADERBOARD, BREEZE_WIN } from '../app/game/rules.js';
 import { serve } from '../scripts/serve.mjs';
 import { navigation } from './navigation.mjs';
@@ -127,15 +127,16 @@ try {
   await start(culled);
   await start(unculled);
   const views=[
-    {label:'balcony',position:[4.78,-1.15],lookAt:[6.05,1.28,9.6]},
-    {label:'balcony-threshold-outside',position:[4.78,-.14],lookAt:[6.05,1.28,9.6]},
-    {label:'balcony-threshold-inside',position:[4.78,.13],lookAt:[6.05,1.28,9.6]},
-    {label:'living-to-hall',position:[5.10,5.44],lookAt:[6.05,1.28,9.6]},
-    {label:'hall-to-bedroom',position:[6.04,7.07],lookAt:[6.15,1.28,10.9]},
-    {label:'hall-to-bath',position:[12.13,7.93],lookAt:[12.09,1.04,13.21]},
-    {label:'bath-threshold',position:[12.13,8.94],lookAt:[11.55,1.06,13.14]},
-    {label:'bath',position:[12.06,10.63],lookAt:[10.75,.98,13.15]},
-    {label:'bath-vanity',position:[12.03,11.09],lookAt:[14.32,1.13,13.18]},
+    {label:'balcony',position:[3.69,-1.12],lookAt:[3.68,1.33,1.96]},
+    {label:'balcony-threshold-outside',position:[3.69,-.26],lookAt:[3.68,1.33,1.96]},
+    {label:'balcony-threshold-inside',position:[3.69,.22],lookAt:[3.68,1.33,1.96]},
+    {label:'landing-to-hall',position:[6.59,4.24],lookAt:[6.58,1.32,5.62]},
+    {label:'hall-to-bedroom',position:[4.12,5.12],lookAt:[4.12,1.25,7.54]},
+    {label:'hall-to-bath',position:[5.60,5.12],lookAt:[5.63,1.16,7.14]},
+    {label:'bath-threshold',position:[5.61,5.99],lookAt:[5.70,1.08,7.38]},
+    {label:'bath',position:[5.68,6.63],lookAt:[6.16,.88,8.18]},
+    {label:'bath-vanity',position:[5.72,7.04],lookAt:[6.67,1.21,5.92]},
+    {label:'bedroom',position:[3.91,6.66],lookAt:[1.54,1,8.66]},
   ];
   for(const shot of views){
     const aim=view=>view.evaluate(({position,lookAt})=>{
@@ -145,9 +146,9 @@ try {
       return {rooms:boboTest.read().metrics.visibleRooms,clear:boboTest.unobstructed(...lookAt)};
     },shot);
     const [visible]=await Promise.all([aim(culled),aim(unculled)]);
-    if(shot.label==='balcony')assert(visible.rooms.includes('bedroom'),'balcony view must keep the room behind the hall doorway');
-    if(!['bath','bath-vanity'].includes(shot.label))assert(visible.clear,'doorway should be open in '+shot.label);
-    const captureNames=['balcony','bath','bath-vanity'];
+    if(shot.label==='hall-to-bedroom')assert(visible.rooms.includes('bedroom'),'the open bedroom doorway must render from the hall');
+    if(!['bath','bath-vanity','bedroom'].includes(shot.label))assert(visible.clear,'doorway should be open in '+shot.label);
+    const captureNames=['balcony','bath','bath-vanity','bedroom'];
     const [rendered,reference]=await Promise.all([
       screenshot(culled,captureNames.includes(shot.label)?shot.label:undefined),
       screenshot(unculled),
@@ -155,24 +156,29 @@ try {
     assert.equal(digest(rendered),digest(reference),'culling changed visible geometry at '+shot.label);
   }
   const sampledFrames=await culled.evaluate(()=>{
-    const sightline=[6.23,1.20,12.80];
-    boboTest.pose(6.25,6.10);
+    const sightline=[6.58,1.33,5.62];
+    boboTest.pose(6.59,4.23);
     const sampled=[];
     for(let step=0;step<=12;step++){
       boboTest.point(...sightline);
       boboTest.render();
       const {pose,metrics}=boboTest.read();
-      sampled.push({z:pose.z,bedroom:metrics.visibleRooms.includes('bedroom'),clear:boboTest.unobstructed(...sightline)});
+      sampled.push({z:pose.z,hall:metrics.visibleRooms.includes('hall'),clear:boboTest.unobstructed(...sightline)});
       boboTest.move(0,.04);
     }
     return sampled;
   });
-  assert(sampledFrames[0].z<6.4&&sampledFrames.at(-1).z>6.4,'approach must cross the living room–hall boundary');
-  assert(sampledFrames.every(frame=>frame.bedroom&&frame.clear),
-    'the bedroom doorway must remain visible while walking from the living room into the hall');
+  assert(sampledFrames[0].z<rooms.hall[1]&&sampledFrames.at(-1).z>rooms.hall[1],'approach must cross the living room–hall boundary');
+  assert(sampledFrames.every(frame=>frame.hall&&frame.clear),
+    'the hall doorway must remain visible while walking from the landing into the hall');
+  const blocked=await culled.evaluate(({start,bed,tub})=>{
+    boboTest.pose(start.x,start.z);
+    return [boboTest.unobstructed(bed.x,1.15,bed.z),boboTest.unobstructed(tub.x,.70,tub.z)];
+  },{start:START,bed:spots.find(s=>s.id==='on-the-duvet'),tub:spots.find(s=>s.id==='bathtub')});
+  assert.deepEqual(blocked,[false,false],'the private rooms should be hidden from the living room');
   await culled.close();
   await unculled.close();
-  console.log('Culling matches the unculled scene from nine real views, including the balcony-to-hall sightline.');
+  console.log('Culling matches ten real views. The short hall blocks direct views into the private rooms from the living room.');
 
   // Geometry is checked by aiming real rendered cat meshes from collision-reachable coordinates.
   const movingChecks=Array.from({length:24},(_,i)=>{
@@ -186,16 +192,16 @@ try {
   for(const {id,which,witness} of witnesses)(which==='bobo'?boboWitness:decoyWitness).set(id,witness);
 
   // A planted target behind the apartment shell must be rejected by the same witness check.
-  const planted=await findWitnesses(page,[{spot:{...special.lap,lap:false,id:'sealed-cat',x:18,z:11},which:'bobo',points:[[14.1,11.9]]}]);
+  const planted=await findWitnesses(page,[{spot:{...special.lap,lap:false,id:'sealed-cat',x:6.50,z:9.21},which:'bobo',points:[[3.45,7.63]]}]);
   assert.equal(planted[0].witness,null);
   console.log('Reachability and ray tests passed for '+checks.length+' staged cases, plus a planted occlusion fault.');
 
-  await page.evaluate(()=>{
-    boboTest.spot({id:'patriot-heat-pad',x:2.23,y:.509,z:1.65,pose:'sit'},null,true);
-    boboTest.pose(2.60,2.65);
-    boboTest.point(2.23,.83,1.65);
+  await page.evaluate(pad=>{
+    boboTest.spot({...pad,pose:'sit'},null,true);
+    boboTest.pose(pad.x+.65,pad.z+.98);
+    boboTest.point(pad.x,.83,pad.z);
     boboTest.render();
-  });
+  },spots[0]);
   assert.deepEqual(await page.evaluate(()=>boboTest.costume()),
     ['American flag','American flag','Bald eagle and flagpoles']);
   await screenshot(page,'patriot-bobo');
@@ -221,7 +227,7 @@ try {
   const beforeAim=await page.evaluate(()=>boboTest.read().pose.yaw);
   await page.mouse.move(650,390);
   assert.notEqual(await page.evaluate(()=>boboTest.read().pose.yaw),beforeAim,'desktop aim must work without clicking');
-  await page.evaluate(()=>boboTest.point(14,2,9));
+  await page.evaluate(()=>boboTest.point(0,2.3,4.2));
   await page.mouse.click(650,390);
   assert((await page.evaluate(()=>boboTest.read().audio.events)).includes('shout'),'left click must shout');
   await page.evaluate(()=>boboTest.tick(.5));
@@ -344,15 +350,15 @@ try {
   const all=await low.evaluate(()=>boboTest.read());
   assert.equal(all.metrics.visibleRooms.length,8);
   assert(all.metrics.calls<=DRAW_CAP && all.metrics.calls>=capture.metrics.calls);
-  await low.evaluate(()=>{
-    boboTest.pose(2.10,3.95,Math.PI,0);
-    boboTest.point(1.9,.885,5.922);
+  await low.evaluate(tv=>{
+    boboTest.pose(2.51,3.44,Math.PI,0);
+    boboTest.point(tv.x,.895,tv.z-.038);
     for(let i=0;i<10;i++)boboTest.tick(.10);
-  });
+  },television);
   const seen=await low.evaluate(()=>boboTest.read().metrics.tvFrame);
   assert(seen>=10&&seen<=13,'TV should draw approximately 11 fps while visible: '+seen);
   await low.evaluate(()=>{
-    boboTest.point(2.24,1.0,1.5);
+    boboTest.point(1.62,1.0,1.27);
     for(let i=0;i<10;i++)boboTest.tick(.1);
   });
   assert.equal(await low.evaluate(()=>boboTest.read().metrics.tvFrame),seen,'TV should stop when out of view');
@@ -445,7 +451,7 @@ try {
   await start(stress);
   await stress.evaluate(()=>{
     for(let i=0;i<100;i++){
-      boboTest.pose(2.5+(i%9)*.5,4+(i%4)*.5,i*Math.PI/11,Math.sin(i)*.54);
+      boboTest.pose(3.1+(i%8)*.47,3.76+(i%3)*.11,i*Math.PI/11,Math.sin(i)*.54);
       boboTest.tick(.18);
     }
   });
