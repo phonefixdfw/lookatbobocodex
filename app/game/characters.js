@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { Batch, canvas, texture } from './geometry.js';
 import { random } from './rules.js';
+import { addPatriotAccessories } from './patriot.js';
 
 export function catMaterials(low, shadow) {
   const fur=canvas(low?64:128,low?64:128);
@@ -102,6 +103,7 @@ export function makeCat(materials,low,decoy=false,pose='sit',patriot=false) {
     face.oval(.003,.052,.079,.018,.028,.014,light,furPart);
   }
   if(patriot){
+    addPatriotAccessories(breathe,materials,low,h);
     face.oval(0,.102,.005,.176,.085,.169,'#bf342f');
     face.oval(0,.104,.094,.180,.022,.122,'#982621');
     // A stitched campaign slogan on a canvas, painted in code.

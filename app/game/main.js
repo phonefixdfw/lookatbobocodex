@@ -2,6 +2,7 @@ import { DRAW_CAP, WALK_SPEED, movePlayer } from './layout.js';
 import { BREEZE_WIN, GOAL, Run, options, formatTime, readTimes, saveTime } from './rules.js';
 import { makeScene } from './scene.js';
 import { makeAudio } from './audio.js';
+import { makeCelebration } from './celebration.js';
 
 const el=id=>document.getElementById(id);
 const shell=el('shell'), game=el('game'), stage=el('stage'), canvas=el('world');
@@ -21,6 +22,7 @@ const manualClock=query.capture || (query.test && new URLSearchParams(location.s
 const seedOverride=new URLSearchParams(location.search).has('seed') || query.capture || query.test;
 const prefs={volume:.65,voice:true,music:query.music,sensitivity:1};
 const audio=makeAudio(prefs.music,query.capture);
+const celebration=makeCelebration(el('fireworks'));
 const keys=new Set();
 const stick={x:0,y:0,id:null};
 let drag=null, run=null, scene, mode='home', panelKind='', sound=true, lastFrame=0, lastHero=0;
@@ -80,6 +82,7 @@ function dismiss(){
   panelKind='';
 }
 function goHome(){
+  celebration.clear();
   dismiss();
   mode='home';
   game.hidden=true;
@@ -105,6 +108,7 @@ function clearInput(){
 
 function start(){
   if(missedWebGL)return;
+  celebration.clear();
   const actual=seedOverride?query.seed:crypto.getRandomValues(new Uint32Array(1))[0];
   run=new Run({...query,seed:actual});
   mode='playing';
@@ -140,6 +144,7 @@ function advanceClock(now){
 
 function pause(kind='pause'){
   if(mode!=='playing')return;
+  celebration.clear();
   advanceClock(performance.now());
   mode='paused';
   clearInput();
@@ -224,16 +229,21 @@ function updateHud(){
     el('stamp').textContent='seed '+run.config.seed+' · '+scene.metrics.calls+'/'+DRAW_CAP+' draws · '+run.spot.id;
   }
 }
-function notice(message,wrong=false){
+function notice(message,tone=''){
   statusSince=run.elapsed;
-  status.className='status show'+(wrong?' wrong':'');
+  status.className='status show '+tone;
   status.textContent=message;
 }
-function win(){
+function win(patriot){
   mode='won';
   clearInput();unlockPointer();updateAudio();
   if(!query.capture && !query.test)saveTime(localStorage,run);
   openPanel('win',BREEZE_WIN);
+  if(patriot){
+    const award=paragraph('MAGA Bobo · +3 points');
+    award.className='patriot-award';
+    body.append(award);
+  }
   body.append(paragraph('Bobo points '+GOAL+' / '+GOAL+' · '+formatTime(run.time,true)+' · '+run.dags+' DAG!'),
     actions(button('Play again',start,true),button('Best times',showScores),button('Main menu',goHome)));
 }
@@ -253,14 +263,15 @@ function shout(){
   if(result==='miss')notice('No cat in sight');
   else if(result==='dag'){
     audio.speak('dag');audio.reward('dag');
-    notice('DAG! −1 point · +5 seconds',true);
+    notice('DAG! −1 point · +5 seconds','wrong');
   }else {
-    audio.reward(result);
-    const earned=result==='patriot' || (result==='win' && run.patriot) ? 3 : 1;
-    notice(earned===3?'Patriot Bobo! +3':'Bobo! +1');
+    const patriot=result==='patriot' || (result==='win' && run.patriot);
+    audio.reward(patriot?'patriot':result);
+    celebration.play(patriot?'patriot':'found');
+    notice(patriot?'MAGA Bobo! +3 points':'Bobo! +1',patriot?'prize':'');
     if(result==='win'){
       audio.speak('win');
-      win();
+      win(patriot);
     }else{
       scene.respawn(run);
       scene.render(run.elapsed);
@@ -294,7 +305,7 @@ function playFrame(now,dt){
     el('desktop-hint').hidden=true;
     el('touch-hint').hidden=true;
   }
-  if(run.elapsed-statusSince>1.45)status.className='status';
+  if(run.elapsed-statusSince>(status.classList.contains('prize')?2.1:1.45))status.className='status';
   updateHud();
 }
 function frame(now){
@@ -419,6 +430,7 @@ for(const type of ['pointerup','pointercancel','lostpointercapture']){
 if(query.test && scene){
   window.boboTest={
     config:query,start,shout,pause,resume,
+    costume:()=>scene.bobo?.getObjectByName('Patriot Bobo accessories')?.children.map(object=>object.name)??[],
     read:()=>({mode,spot:run?.spot,decoy:run?.decoySpot,patriot:run?.patriot,score:run?.score,dags:run?.dags,time:run?.time,
       elapsed:run?.elapsed,phase:run?.phase,found:run?.found,spawn:run?.playerSpawn,pose:scene.hudPose,metrics:scene.metrics,audio:audio.status(),
       bobo:scene.bobo?.position.toArray(), hit:scene.hit()}),
