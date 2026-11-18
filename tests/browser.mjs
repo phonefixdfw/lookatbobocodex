@@ -201,6 +201,7 @@ try {
   await screenshot(page,'patriot-bobo');
 
   await page.reload();
+  await page.emulateMedia({reducedMotion:'no-preference'});
   await start(page);
   await page.keyboard.press('KeyP');
   await page.getByRole('heading',{name:'Paused'}).waitFor();
@@ -248,6 +249,11 @@ try {
       assert(moved.audio.events.includes('effect:patriot'));
       assert.equal(await page.locator('#fireworks').getAttribute('data-effect'),'patriot');
       assert.match(await page.locator('#status').textContent(),/MAGA Bobo.*\+3/);
+      assert(await page.locator('#fireworks').evaluate(async canvas=>{
+        const frame=canvas.toDataURL();
+        await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+        return frame===canvas.toDataURL();
+      }),'Patriot fireworks should freeze for deterministic captures');
     }
     assert.deepEqual([moved.pose.x,moved.pose.z],[moved.spawn.x,moved.spawn.z],'scoring should relocate the player to their new spawn');
     assert(Math.hypot(moved.pose.x-step.pose.x,moved.pose.z-step.pose.z)>=1.65,'scoring should move the player away from the find');

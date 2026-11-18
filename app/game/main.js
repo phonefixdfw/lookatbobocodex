@@ -22,7 +22,8 @@ const manualClock=query.capture || (query.test && new URLSearchParams(location.s
 const seedOverride=new URLSearchParams(location.search).has('seed') || query.capture || query.test;
 const prefs={volume:.65,voice:true,music:query.music,sensitivity:1};
 const audio=makeAudio(prefs.music,query.capture);
-const celebration=makeCelebration(el('fireworks'));
+const celebration=makeCelebration(el('fireworks'),query.capture);
+document.documentElement.classList.toggle('capture',query.capture);
 const keys=new Set();
 const stick={x:0,y:0,id:null};
 let drag=null, run=null, scene, mode='home', panelKind='', sound=true, lastFrame=0, lastHero=0;

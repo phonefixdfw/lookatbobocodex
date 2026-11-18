@@ -101,6 +101,7 @@ kbd { display: inline-block; padding: .14em .39em; margin-right: .23em; border-r
   color: #fff4de; background: #273d62; border: 1px solid #e3ba78; font-weight: 800;
 }
 .panel .patriot-award { border-radius: 7px; padding: 8px 12px; width: fit-content; }
+.capture .status.show { animation: none; }
 .status.wrong { background: #7b4a3bef; }
 @keyframes rise { from { transform: translate(-50%,6px); } to { transform: translate(-50%,0); } }
 .desktop-hint { z-index: 2; position: absolute; bottom: 21px; left: 50%; transform: translateX(-50%); padding: 8px 13px; font-size: 12px; white-space: nowrap; pointer-events: none; }
