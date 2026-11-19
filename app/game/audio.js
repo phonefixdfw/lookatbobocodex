@@ -1,6 +1,7 @@
 const TEMPO=104;
+const MUSIC_LEVEL=.82;
 const phrase=[62,65,69,72,74,72,69,65, 67,70,74,77,76,74,70,67, 65,69,72,76,74,72,67,69, 62,65,69,72,69,65,64,62];
-const roots=[38,43,41,38];
+const roots=[50,55,53,50];
 const toHz=note=>440*2**((note-69)/12);
 const beat=60/TEMPO;
 const voiceLines={
@@ -35,12 +36,12 @@ export function makeAudio(musicEnabled=true, muted=false) {
     if(!audio){
       audio=new contextClass();
       master=audio.createGain();master.gain.value=volume;master.connect(audio.destination);
-      musicBus=audio.createGain();musicBus.gain.value=music?.36:0;musicBus.connect(master);
+      musicBus=audio.createGain();musicBus.gain.value=0;musicBus.connect(master);
       voiceBus=audio.createGain();voiceBus.gain.value=voice?1:0;voiceBus.connect(master);
+      audio.addEventListener('statechange',syncMusic);
       for(const kind of Object.keys(voiceLines))fetchVoice(kind);
     }
     audio.resume().catch(()=>{});
-    if(active && music)resumeMusic();
   }
 
   function pluck(midi,start,duration,level,bus,wave='triangle'){
@@ -55,10 +56,11 @@ export function makeAudio(musicEnabled=true, muted=false) {
   }
 
   function schedule(){
-    if(!audio || !active || !music)return;
-    while(next < audio.currentTime+.18){
+    const now=audio.currentTime;
+    if(next<now)next=now+.03;
+    while(next < now+.18){
       const step=note%32;
-      pluck(phrase[step],next,beat*(step%2?.75:.55),.13,musicBus);
+      pluck(phrase[step],next,beat*(step%2?.75:.55),.18,musicBus);
       if(step%4===0){
         const root=roots[Math.floor(step/8)];
         pluck(root+(step%8?7:0),next,beat*1.7,.17,musicBus,'sine');
@@ -68,21 +70,19 @@ export function makeAudio(musicEnabled=true, muted=false) {
       noteLog('midi');
     }
   }
-  function resumeMusic(){
-    if(!audio || timer || !active || !music)return;
-    next=audio.currentTime+.03;
-    musicBus.gain.setTargetAtTime(.36,audio.currentTime,.02);
-    schedule();
-    timer=setInterval(schedule,65);
-  }
-
-  function setActive(enabled){
-    active=enabled;
-    if(enabled){
-      if(music)resumeMusic();
+  function syncMusic(){
+    if(!audio)return;
+    const playing=active && music && audio.state==='running';
+    if(playing===(timer!==null))return;
+    const now=audio.currentTime;
+    musicBus.gain.cancelScheduledValues(now);
+    musicBus.gain.setTargetAtTime(playing?MUSIC_LEVEL:0,now,.02);
+    if(playing){
+      next=now+.03;
+      schedule();
+      timer=setInterval(schedule,65);
     }else{
       clearInterval(timer);timer=null;
-      if(audio)musicBus.gain.setTargetAtTime(0,audio.currentTime,.02);
     }
   }
 
@@ -127,14 +127,14 @@ export function makeAudio(musicEnabled=true, muted=false) {
     tones.forEach((tone,i)=>pluck(tone,start+.045*i,.25,.078,master,'sine'));
   }
 
-  return {unlock,setActive,speak,reward,
+  return {unlock,speak,reward,
     settings(values){
-      volume=values.volume;voice=values.voice;music=values.music;
+      volume=values.volume;voice=values.voice;music=values.music;active=values.active;
       if(audio){
         master.gain.setTargetAtTime(volume,audio.currentTime,.02);
         voiceBus.gain.setTargetAtTime(voice?1:0,audio.currentTime,.02);
       }
-      setActive(false);setActive(values.active);
+      syncMusic();
     },
     status(){return {events:[...events],loaded:[...samples.keys()],music,voice,active,notes:note};},
   };
