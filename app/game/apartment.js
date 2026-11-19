@@ -179,11 +179,17 @@ export function makeApartment(scene, low) {
         b.box(television.x,.56,television.z,.42,.08,.25,ink);
         break;
       case 'lounge': {
-        const facing=room==='bedroom'?0:Math.PI;
+        const sideways=room==='living';
+        const yaw=sideways?Math.PI/2:room==='bedroom'?0:Math.PI;
+        const across=sideways?d:w, depth=sideways?w:d;
+        const sin=Math.sin(yaw), cos=Math.cos(yaw);
         fourLegs(b,x,z,w,d,.44);
-        b.cushion(x,.42,z,w*.88,.157,d*.95,olive,surface('linen'));
-        b.cushion(x,.67,z+Math.cos(facing)*d*.40,w*.88,.44,.13,'#6a806e',surface('linen',{rx:Math.cos(facing)*.15}));
-        for(const sign of [-1,1])b.box(x+w*.44*sign,.63,z,.073,.075,d*.92,walnut,surface('wood'));
+        b.cushion(x,.42,z,across*.88,.157,depth*.95,olive,surface('linen',{ry:yaw}));
+        b.cushion(x+sin*depth*.40,.67,z+cos*depth*.40,across*.88,.44,.13,'#6a806e',surface('linen',{ry:yaw,rx:cos*.15}));
+        for(const sign of [-1,1]){
+          const arm=across*.44*sign;
+          b.box(x+cos*arm,.63,z-sin*arm,.073,.075,depth*.92,walnut,surface('wood',{ry:yaw}));
+        }
         break;
       }
       case 'plant': plant(b,x,z,w,d,h,low,0,Math.round(x*117)); break;
@@ -281,12 +287,12 @@ export function makeApartment(scene, low) {
         }
         break;
       case 'toilet':
-        b.oval(x,.245,z-.1,w*.75,.43,d*.64,'#f3e8d8',porcelain);
-        b.oval(x,.481,z-.1,w,.105,d*.73,'#f2ecdc',porcelain);
-        b.oval(x,.528,z-.1,w*.69,.019,d*.51,'#9eb0ab',porcelain);
-        b.ring(x,.548,z-.1,w*.90,.11,d*.69,'#f9f2dd',porcelain);
-        b.cushion(x,.52,z+d*.31,w*.89,.50,.22,'#f3ead5',porcelain);
-        b.cyl(x,.785,z+d*.29,.062,.013,.041,'#a89572',porcelain);
+        b.oval(x-.1,.245,z,w*.64,.43,d*.75,'#f3e8d8',porcelain);
+        b.oval(x-.1,.481,z,w*.73,.105,d,'#f2ecdc',porcelain);
+        b.oval(x-.1,.528,z,w*.51,.019,d*.69,'#9eb0ab',porcelain);
+        b.ring(x-.1,.548,z,w*.69,.11,d*.90,'#f9f2dd',porcelain);
+        b.cushion(x+w*.31,.52,z,.22,.50,d*.89,'#f3ead5',porcelain);
+        b.cyl(x+w*.29,.785,z,.041,.013,.062,'#a89572',porcelain);
         break;
       case 'linen-cabinet':
         b.cushion(x,h/2+.025,z,w,h-.05,d,'#ab8a6b',surface('walnut'));
@@ -367,8 +373,8 @@ export function makeApartment(scene, low) {
   bath.cushion(mirrorX,2.045,mirrorZ+.054,.31,.079,.10,'#fff2c8',porcelain);
   bath.cyl(tub.x+.42,2.06,bathSouth-.28,.13,.023,.18,'#b4a07d',porcelain);
   bath.line([tub.x+.42,2.072,bathSouth-.08],[tub.x+.42,2.072,bathSouth-.28],.022,'#ae9977','glaze');
-  bath.line([7.12,1.12,6.72],[7.12,1.12,7.16],.027,walnut);
-  bath.box(7.09,.97,6.94,.067,.31,.37,'#c39f87',surface('towel'));
+  bath.line([7.12,1.12,7.26],[7.12,1.12,7.70],.027,walnut);
+  bath.box(7.09,.97,7.48,.067,.31,.37,'#c39f87',surface('towel'));
 
   const [,patioNorth,patioRight]=rooms.patio;
   const outer=patioNorth+.045,depth=-outer;
