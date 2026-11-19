@@ -21,10 +21,11 @@ const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 const exact='?gate=off&test=on&music=off&lap=2&patriot=on&stamp=on';
 const nav=navigation();
 
-async function pageFor(params,viewport=desktop) {
+async function pageFor(params,viewport=desktop,initScript) {
   const page=await browser.newPage(viewport);
   page.on('pageerror',error=>errors.push(error.message));
   page.on('response',response=>{if(response.status()>=400)errors.push(response.status()+' '+response.url());});
+  if(initScript)await page.addInitScript(initScript);
   await page.goto(url+params);
   await page.waitForFunction(()=>Boolean(window.boboTest),null,{timeout:12000});
   return page;
@@ -409,19 +410,52 @@ try {
   await mobile.close();
   console.log('Phone portrait and landscape, tablet, touch joystick, drag aiming and touch shout passed.');
 
-  const audio=await pageFor('?test=on&seed=11&quality=low&lap=off&patriot=off');
+  const audio=await pageFor('?test=on&clock=manual&seed=11&quality=low&lap=off&patriot=off',desktop,()=>{
+    const connect=AudioNode.prototype.connect;
+    AudioNode.prototype.connect=function(target,...ports){
+      if(target===this.context.destination && this instanceof GainNode && !window.audioRms){
+        const analyser=this.context.createAnalyser();
+        const frames=new Float32Array(analyser.fftSize);
+        connect.call(this,analyser);
+        window.audioRms=()=>{
+          analyser.getFloatTimeDomainData(frames);
+          let squares=0;
+          for(const sample of frames)squares+=sample*sample;
+          return Math.sqrt(squares/frames.length);
+        };
+      }
+      return connect.call(this,target,...ports);
+    };
+  });
   await start(audio);
-  await audio.waitForFunction(()=>boboTest.read().audio.loaded.length===3&&boboTest.read().audio.notes>0,null,{timeout:7000});
-  const audioTarget=await audio.evaluate(()=>boboTest.read().decoy);
-  assert.equal((await approach(audio,audioTarget,'decoy',true)).result,'dag');
-  const spoken=await audio.evaluate(()=>boboTest.read().audio.events);
-  assert(spoken.includes('midi')&&spoken.includes('shout')&&spoken.includes('dag')&&spoken.includes('effect:dag'));
+  await audio.waitForFunction(()=>boboTest.read().audio.loaded.length===3,null,{timeout:7000});
+  const audible=()=>audio.waitForFunction(()=>window.audioRms?.()>.04,null,{timeout:7000});
+  await audible();
   await audio.keyboard.press('KeyP');
   const audioNotes=await audio.evaluate(()=>boboTest.read().audio.notes);
   await new Promise(resolve=>setTimeout(resolve,330));
   assert.equal(await audio.evaluate(()=>boboTest.read().audio.notes),audioNotes);
+  assert((await audio.evaluate(()=>audioRms()))<.0001);
+  const setMusic=async enabled=>{
+    await audio.getByRole('button',{name:'Settings',exact:true}).click();
+    await audio.getByRole('checkbox',{name:'Bardcore music'}).setChecked(enabled);
+    await audio.getByRole('button',{name:'Back',exact:true}).click();
+    await audio.getByRole('button',{name:'Resume',exact:true}).click();
+  };
+  await setMusic(false);
+  await new Promise(resolve=>setTimeout(resolve,330));
+  assert.equal(await audio.evaluate(()=>boboTest.read().audio.notes),audioNotes);
+  assert((await audio.evaluate(()=>audioRms()))<.0001);
+  await audio.keyboard.press('KeyP');
+  await setMusic(true);
+  await audible();
+  await audio.evaluate(()=>boboTest.tick(.65));
+  const audioTarget=await audio.evaluate(()=>boboTest.read().decoy);
+  assert.equal((await approach(audio,audioTarget,'decoy',true)).result,'dag');
+  const spoken=await audio.evaluate(()=>boboTest.read().audio.events);
+  assert(spoken.includes('midi')&&spoken.includes('shout')&&spoken.includes('dag')&&spoken.includes('effect:dag'));
   await audio.close();
-  console.log('Three recorded lines decoded; bardcore sequencing, shout, DAG! and pause audio checks passed.');
+  console.log('Three recorded lines decoded. Measured audible bardcore at startup and after re-enabling it, and silence when paused or disabled. Shout and DAG! passed.');
 
   const subsite=await serve({basePath:'/lookatbobocodex/'});
   try{

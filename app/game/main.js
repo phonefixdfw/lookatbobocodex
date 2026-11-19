@@ -110,6 +110,7 @@ function clearInput(){
 
 function start(){
   if(missedWebGL)return;
+  audio.unlock();
   celebration.clear();
   const actual=seedOverride?query.seed:crypto.getRandomValues(new Uint32Array(1))[0];
   run=new Run({...query,seed:actual});
@@ -132,7 +133,6 @@ function start(){
   updateHud();
   lastFrame=performance.now();
   activeAt=lastFrame;
-  audio.unlock();
   updateAudio();
   lockPointer();
 }
