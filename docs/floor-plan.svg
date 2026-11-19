@@ -68,7 +68,7 @@
 <rect x="58.24" y="189.72" width="138.88" height="51.52" rx="3" fill="#ac987b" opacity=".67"/>
 <rect x="91.84" y="276.52" width="71.68" height="33.6" rx="3" fill="#ac987b" opacity=".67"/>
 <rect x="86.80000000000001" y="380.68" width="110.88" height="23.52" rx="3" fill="#ac987b" opacity=".67"/>
-<rect x="253.12" y="305.92" width="39.199999999999996" height="38.64" rx="3" fill="#ac987b" opacity=".67"/>
+<rect x="255.08000000000004" y="300.59999999999997" width="38.64" height="39.199999999999996" rx="3" fill="#ac987b" opacity=".67"/>
 <ellipse cx="200.48000000000002" cy="171.24" rx="10.08" ry="10.36" fill="#ac987b" opacity=".67"/>
 <ellipse cx="63.84" cy="358.84" rx="12.6" ry="12.04" fill="#ac987b" opacity=".67"/>
 <rect x="47.04" y="256.36" width="24.64" height="44.800000000000004" rx="3" fill="#ac987b" opacity=".67"/>
@@ -93,7 +93,7 @@
 <rect x="314.15999999999997" y="571.64" width="91.83999999999999" height="41.44" rx="3" fill="#ac987b" opacity=".67"/>
 <rect x="313.03999999999996" y="504.16" width="16.8" height="21.84" rx="3" fill="#ac987b" opacity=".67"/>
 <rect x="400.40000000000003" y="479.52" width="38.080000000000005" height="27.439999999999998" rx="3" fill="#ac987b" opacity=".67"/>
-<rect x="408.52" y="536.0799999999999" width="25.2" height="36.4" rx="3" fill="#ac987b" opacity=".67"/>
+<rect x="402.35999999999996" y="523.1999999999999" width="36.4" height="25.2" rx="3" fill="#ac987b" opacity=".67"/>
 <rect x="410.2" y="584.8000000000001" width="24.08" height="24.08" rx="3" fill="#ac987b" opacity=".67"/>
 <ellipse cx="69.44" cy="83.88" rx="15.680000000000001" ry="12.88" fill="#ac987b" opacity=".67"/>
 <rect x="118.16" y="73.52" width="36.96" height="34.16" rx="3" fill="#ac987b" opacity=".67"/>
@@ -107,7 +107,6 @@
 <line x1="299.59999999999997" y1="152.2" x2="299.59999999999997" y2="214.92000000000002" stroke="#524639" stroke-width="5" stroke-linecap="square"/>
 <line x1="299.59999999999997" y1="293.88" x2="299.59999999999997" y2="341.48" stroke="#524639" stroke-width="5" stroke-linecap="square"/>
 <line x1="456.40000000000003" y1="152.2" x2="456.40000000000003" y2="235.64" stroke="#524639" stroke-width="5" stroke-linecap="square"/>
-<line x1="456.40000000000003" y1="317.40000000000003" x2="456.40000000000003" y2="335.32" stroke="#524639" stroke-width="5" stroke-linecap="square"/>
 <line x1="42" y1="407" x2="299.59999999999997" y2="407" stroke="#524639" stroke-width="5" stroke-linecap="square"/>
 <line x1="299.59999999999997" y1="407" x2="378" y2="407" stroke="#524639" stroke-width="5" stroke-linecap="square"/>
 <line x1="444.08" y1="407" x2="456.40000000000003" y2="407" stroke="#524639" stroke-width="5" stroke-linecap="square"/>
